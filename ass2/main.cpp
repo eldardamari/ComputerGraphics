@@ -3,9 +3,15 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <math.h>
 #include <stdlib.h>
 
-#include <GLUT/glut.h>
+#ifdef __APPLE__
+    #include <GLUT/glut.h>
+#else 
+    #include <GL/glut.h>
+#endif
+#define GL_PI 3.1415926535897932384626433832795
 
 using namespace std;
 
@@ -18,18 +24,15 @@ int width,legnth;
 void init()
 {
 	float modelMatrix[16], projectionMatrix[16];
-	glClearColor(0, 0, 0, 1);
+	glClearColor(1, 1, 1, 1);
 
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
 
-	//gluPerspective(eye[0], eye[1], eye[2], eye[3]);
-	//gluLookAt(eye[4], eye[5], eye[6],eye[7],eye[8], eye[9], eye[10], eye[11], eye[12]);  //define view direction
-
 	gluPerspective(45, 1, 2, 25);
 	gluLookAt(15.5,7.5, 8, 0.7,0.5,1, 0, 0, 1);  //define view direction
 	
-	//glOrtho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0); //For DEBUG
+	//glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0); //For DEBUG
 
 	//get matrices 
 	glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrix);
@@ -212,7 +215,6 @@ void buildPolygons()
     }
 }
 
-
 void draw_axes(void)
 {
 float ORG[3] = {0,0,0};
@@ -221,8 +223,8 @@ float XP[3] = {5,0,0}, XN[3] = {-5,0,0},
       YP[3] = {0,5,0}, YN[3] = {0,-5,0},
       ZP[3] = {0,0,5}, ZN[3] = {0,0,-5};
 
-    glBegin (GL_LINES);
     glLineWidth (2.0);
+    glBegin (GL_LINES);
 
     glColor3f (1,0,0); // +X axis is red.
     glVertex3fv (ORG);
@@ -250,12 +252,152 @@ float XP[3] = {5,0,0}, XN[3] = {-5,0,0},
 	glFlush(); //print to screen*/
 
 }
+void draw_wheel(void)
+{
+    /*glColor3f(0, 1, 0);
+    glutSolidSphere(2, 20, 20); */
+    int iPivot  = 1;
+    GLfloat z, y,angle;
 
+     /*glBegin(GL_TRIANGLE_FAN);
+
+        glVertex3f(0.0f,0.0f,3.0f);
+        for(angle=0.0f; angle < (2.0f*GL_PI); angle +=(GL_PI/8.0f)) 
+        {
+            cout << "here " << angle << endl; 
+                x = 3*cos(angle);
+                y = 3*sin(angle);
+
+                if((iPivot %2) == 0) 
+                        glColor3f(0.0f,1.0f,0.0f);
+                else
+                        glColor3f(1.0f,0.0f,0.0f);
+
+                iPivot++;
+               glVertex3f(0, x,y);
+        }
+        glEnd(); */
+        /*glBegin(GL_TRIANGLE_FAN);
+
+       // Center of fan is at the origin
+        glVertex3f(0.0f, 0.0f,3.0f);
+        for(angle = 0.0f; angle < (2.0f*GL_PI); angle += (GL_PI/8.0f))
+                {
+                // Calculate x and y position of the next vertex
+                y   = 3.0f*cos(angle);
+                z   = 3.0f*sin(angle);
+
+               // Alternate color between red and green
+               if((iPivot %2) == 0)
+                       glColor3f(0.0f, 1.0f, 0.0f);
+               else
+                       glColor3f(1.0f, 0.0f, 0.0f);
+
+               // Increment pivot to change color next time
+               iPivot++;
+
+               // Specify the next vertex for the triangle fan
+               glVertex3f(y,0,z);
+
+               }
+
+        // Done drawing the fan that covers the bottom
+        glEnd();*/
+
+    
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(1,0,0);
+
+    glVertex3f(0.5,0,3);
+    for (angle = 0.0f ; angle < 360 ; angle += 45.0f) {
+        z = 3.0f*sin(angle*GL_PI/180) + 3.0f;
+        y = 3.0f*cos(angle*GL_PI/180);
+        cout << "y = " << y << " z = " << z << endl;
+        glVertex3f(0.5, y , z);
+    }
+    glEnd();
+    
+    glBegin(GL_TRIANGLES);
+
+    glColor3f(1,0,0);
+
+    glVertex3f(0.5,0,3);
+    glVertex3f(0.5, y , z);
+    y = 3.0f*cos(0.0f);
+    z = 3.0f*sin(0.0f) + 3.0f;
+    glVertex3f(0.5, y , z);
+
+    glEnd();
+    
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(0,1,0);
+
+    glVertex3f(-0.5,0,3);
+    for (angle = 0.0f ; angle < 360 ; angle += 45.0f) {
+        z = 3.0f*sin(angle*GL_PI/180) + 3.0f;
+        y = 3.0f*cos(angle*GL_PI/180);
+        cout << "y = " << y << " z = " << z << endl;
+        glVertex3f(-0.5, y , z);
+    }
+    glEnd();
+    
+    glBegin(GL_TRIANGLES);
+
+    glColor3f(0,1,0);
+
+    glVertex3f(-0.5,0,3);
+    glVertex3f(-0.5, y , z);
+    y = 3.0f*cos(0.0f);
+    z = 3.0f*sin(0.0f) + 3.0f;
+    glVertex3f(-0.5, y , z);
+
+    glEnd();
+
+	/*glVertex3f(0.5, -3  , 3);
+	glVertex3f(0.5, -1.5,5.6);
+	glVertex3f(0.5, 0   ,6);
+	glVertex3f(0.5, 1.5,5.6);
+	glVertex3f(0.5, 3 , 3);
+	glVertex3f(0.5, 1.5,0);
+	glVertex3f(0.5, 0,0);
+	glVertex3f(0.5, -1.5,0);
+
+    glEnd();
+    
+    glBegin(GL_TRIANGLES);
+    glColor3f(1,0,0);
+    glVertex3f(0.5,0,3);
+	glVertex3f(0.5, -3  , 3);
+	glVertex3f(0.5, -1.5,0);
+
+    glEnd();*/
+
+    /*glLineWidth(10);
+	glBegin(GL_QUADS);
+
+	glColor3f(1, 0, 0);
+	glVertex3f(0, -1.5, 3);
+
+	glColor3f(1, 0, 0);
+	glVertex3f(0, 0, 4.5);
+
+	glColor3f(1, 0, 0);
+	glVertex3f(0, 1.5, 3);
+
+	glColor3f(1, 0, 0);
+	glVertex3f(0,0,1.5);
+	glEnd();*/
+
+    glFlush();
+
+}
 void mydisplay(void)
 {	
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     /*buildPolygons();*/
+    /*glRotatef(45,0.0,0.0,1.0);*/
     draw_axes();
+    draw_wheel();
 
 
 }
