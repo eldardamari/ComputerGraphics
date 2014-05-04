@@ -25,8 +25,8 @@ void init()
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
 
-	gluPerspective(45, 1, 1.0, 200);
-	gluLookAt(0, 0, 50, 0, 0, 0, 0, 0, 0);  //define view direction
+	gluPerspective(60, 1, 1, 100);
+	gluLookAt(0, 0, 15, 0, 0, 0, 0, 1, 0);  //define view direction
 
 //	glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0); //For DEBUG
 
@@ -43,9 +43,9 @@ void draw_axes(void)
 {
     float ORG[3] = {0,0,0};
 
-    float XP[3] = {100,0,0}, XN[3] = {-100,0,0},
-          YP[3] = {0,100,0}, YN[3] = {0,-100,0},
-          ZP[3] = {0,0,100}, ZN[3] = {0,0,-100};
+    float XP[3] = {10,0,0}, XN[3] = {-10,0,0},
+          YP[3] = {0,10,0}, YN[3] = {0,-10,0},
+          ZP[3] = {0,0,10}, ZN[3] = {0,0,-10};
 
     glBegin (GL_LINES);
     glLineWidth (2.0);
@@ -70,22 +70,62 @@ void draw_axes(void)
 
 void drawHouse(void)
 {
-    float   houseLeftBackCorner[3] = {2.5,-2.5,7},
-            houseRightBackCorner[3] = {2.5,-5.5,7},
-            houseRightFrontCorner[3] = {5,-5.5,7},
-            houseLeftFrontCorner[3] = {5,-2.5,7};
+    //Multi-colored side - FRONT
+      glBegin(GL_POLYGON);
 
-    glBegin(GL_QUADS);
+      glColor3f( 1.0, 0.0, 0.0 );     glVertex3f(  0.5, -0.5, -0.5 );      // P1 is red
+      glColor3f( 0.0, 1.0, 0.0 );     glVertex3f(  0.5,  0.5, -0.5 );      // P2 is green
+      glColor3f( 0.0, 0.0, 1.0 );     glVertex3f( -0.5,  0.5, -0.5 );      // P3 is blue
+      glColor3f( 1.0, 0.0, 1.0 );     glVertex3f( -0.5, -0.5, -0.5 );      // P4 is purple
 
-    glColor3f (1,1,1); // +Z axis is blue.
-    glVertex3fv (houseLeftBackCorner);
-    glVertex3fv (houseRightBackCorner);
-    glVertex3fv (houseRightFrontCorner);
-    glVertex3fv (houseLeftFrontCorner);
+      glEnd();
 
-    glEnd();
+      // White side - BACK
+      glBegin(GL_POLYGON);
+      glColor3f(   1.0,  1.0, 1.0 );
+      glVertex3f(   5,      -5.5,   0   );
+      glVertex3f(   5,      -5.5,   7   );
+      glVertex3f(   5,      -5.5,   7   );
+      glVertex3f(   5,      -5.5,   0   );
+      glEnd();
 
-    glutSwapBuffers();
+      // Purple side - RIGHT
+      glBegin(GL_POLYGON);
+      glColor3f(  1.0,  0.0,  1.0 );
+      glVertex3f(   5,      -2.5,   0   );
+      glVertex3f(   5,      -5.5,   0   );
+      glVertex3f(   5,      -5.5,   7   );
+      glVertex3f(   5,      -2.5,   7   );
+      glEnd();
+
+      // Green side - LEFT
+      glBegin(GL_POLYGON);
+      glColor3f(   0.0,  1.0,  0.0 );
+      glVertex3f(   2.5,    -2.5,   0   );
+      glVertex3f(   2.5,    -5.5,   0   );
+      glVertex3f(   2.5,    -5.5,   7   );
+      glVertex3f(   2.5,    -2.5,   7   );
+      glEnd();
+
+      // Blue side - TOP
+      glBegin(GL_POLYGON);
+      glColor3f(   0.0,  0.0,  1.0 );
+      glVertex3f(   2.5,    -2.5,   7   );
+      glVertex3f(   2.5,    -5.5,   7   );
+      glVertex3f(   5,      -5.5,   7   );
+      glVertex3f(   5,      -2.5,   7   );
+      glEnd();
+
+      // Red side - BOTTOM
+      glBegin(GL_QUADS);
+      glColor3f (   1.0,    0.0,    0.0 );
+      glVertex3f(   2.5,    -2.5,   0   );
+      glVertex3f(   2.5,    -5.5,   0   );
+      glVertex3f(   5,      -5.5,   0   );
+      glVertex3f(   5,      -2.5,   0   );
+      glEnd();
+
+      glutSwapBuffers();
 
 }
 
@@ -118,21 +158,20 @@ void mydisplay(void)
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     // Reset transformations
+    glMatrixMode(GL_PROJECTION); /* switch matrix mode */
     glLoadIdentity();
-
-//    gluPerspective(45.0,                  //The camera angle
-//                   0.0 / 1.2,             //The width-to-height ratio
-//                   300.0,                   //The near z clipping coordinate
-//                   900.0);                //The far z clipping coordinate
 
     // Rotate when user changes rotate_x and rotate_y
     glRotatef( rotate_x, 1.0, 0.0, 0.0 );
-    glRotatef( rotate_y, 0.0, 1.0, 0.0 );
-    glRotatef( rotate_z, 0.0, 1.0, 1.0 );
+    glRotatef( rotate_z, 0.0, 0.0, 1.0 );
 
-    drawHouse();
+    glMatrixMode(GL_MODELVIEW); /* switch matrix mode */
+
     draw_axes();
 
+    drawHouse();
+
+  glutSwapBuffers();
 
 }
 
@@ -147,10 +186,11 @@ int main(int argc, char**argv) {
     //  Enable Z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 
+	gluPerspective(60, 1, 15, 100);
+    gluLookAt(0, 0, 25, 0, 0, 0, 0, 1, 0);  //define view direction
+
     // Callback functions
 	glutDisplayFunc(mydisplay);
-//    glutReshapeFunc(changeSize);
-//	glutIdleFunc(mydisplay);
 	glutSpecialFunc(specialKeys);
 
     //  Pass control to GLUT for events
