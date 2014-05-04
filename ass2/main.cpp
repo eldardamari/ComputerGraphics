@@ -5,15 +5,17 @@
 #include <vector>
 #include <stdlib.h>
 
+#ifdef __APPLE__
 #include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 using namespace std;
 
-// Global db
-vector<int> map;
-vector<float> eye;
-int colors[256][3];
-int width,legnth;
+double rotate_y = 0;
+double rotate_x = 0;
+double rotate_z = 0;
 
 void init()
 {
@@ -23,15 +25,12 @@ void init()
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
 
-	//gluPerspective(eye[0], eye[1], eye[2], eye[3]);
-	//gluLookAt(eye[4], eye[5], eye[6],eye[7],eye[8], eye[9], eye[10], eye[11], eye[12]);  //define view direction
+	gluPerspective(45, 1, 1.0, 200);
+	gluLookAt(0, 0, 50, 0, 0, 0, 0, 0, 0);  //define view direction
 
-	gluPerspective(45, 1, 2, 25);
-	gluLookAt(15.5,7.5, 8, 0.7,0.5,1, 0, 0, 1);  //define view direction
-	
-	//glOrtho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0); //For DEBUG
+//	glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0); //For DEBUG
 
-	//get matrices 
+	/* get matrices */
 	glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrix);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelMatrix);
 
@@ -40,221 +39,98 @@ void init()
 	glLoadIdentity();
 }
 
-void parseMap(vector<int> *map, int* width, int* legnth)
-{
-    int i = 0;
-
-    ifstream file ( "./input/map.csv" );
-
-    while (file.good())
-    {
-        string s;
-
-        if (!getline(file,s)) break;
-        istringstream ss(s);
-
-        while(ss) 
-        {
-            string s;
-
-            if (!getline(ss,s,',')) break;
-
-            if (i == 0)         { *width = stoi(s);  i++; } 
-            else { if (i == 1)  { *legnth = stoi(s); i++;} 
-            else                {(map)->push_back(stoi(s));
-                }
-            }
-        }
-    }
-    file.close();
-}
-
-void parseColorTable(int clrTable[][3])
-{
-    int row = 0;
-    int col = 0;
-    int rowCounter = 1;
-
-    ifstream file ( "./input/clrTable.csv" );
-
-    while (file.good())
-    {
-        string s;
-
-        if (!getline(file,s)) break;
-        istringstream ss(s);
-
-        while(ss) 
-        {
-            string s;
-
-            if (!getline(ss,s,',')) break;
-
-            clrTable[row][col] = stoi(s);
-            col++;
-            rowCounter++;
-
-            if (rowCounter == 4) {
-                rowCounter = 1;
-                col = 0;
-                row++;
-            }
-        }
-    }
-    file.close();
-}
-
-void parseEye(vector<float> *eye)
-{
-    ifstream file ( "./input/eye.csv" );
-
-    while (file.good())
-    {
-        string s;
-
-        if (!getline(file,s)) break;
-        istringstream ss(s);
-
-        while(ss) 
-        {
-            string s;
-
-            if (!getline(ss,s,',')) break;
-            else {
-                (eye)->push_back(stoi(s));
-            }
-        }
-    }
-    file.close();
-}
-
-void drawQuad(float x[], float y[], float z[], int colorIdx[])
-{
-	glBegin(GL_QUADS);
-
-	float red   = colors[colorIdx[0]][0];
-	float green = colors[colorIdx[0]][1];
-	float blue  = colors[colorIdx[0]][2];
-
-	glColor3ub(red, green, blue);
-	glVertex3f(x[0], y[0], z[0]);
-
-	red     = colors[colorIdx[1]][0];
-	green   = colors[colorIdx[1]][1];
-	blue    = colors[colorIdx[1]][2];
-	glColor3ub(red, green, blue);
-	glVertex3f(x[1], y[1], z[1]);
-
-	red     = colors[colorIdx[2]][0];
-	green   = colors[colorIdx[2]][1];
-	blue    = colors[colorIdx[2]][2];
-	glColor3ub(red, green, blue);
-	glVertex3f(x[2], y[2], z[2]);
-
-	red     = colors[colorIdx[3]][0];
-	green   = colors[colorIdx[3]][1];
-	blue    = colors[colorIdx[3]][2];
-	glColor3ub(red, green, blue);
-	glVertex3f(x[3], y[3], z[3]);
-	glEnd();
-
-	glFlush(); //print to screen*/
-}
-
-void buildPolygons()
-{
-    int i = 0;          // first cell first row
-    int j = width + 1;  // first cell second row
-    float dw = 0;
-    float dl = 0;
-    float distanceW = 10.0/width;
-    float distanceL = 10.0/legnth;
-
-    GLfloat x[4] = {0,0,0,0};
-    GLfloat y[4] = {0,0,0,0};
-    GLfloat z[4] = {0,0,0,0};
-    int color[4] = {0,0,0,0};
-
-
-    // Loop over vector, place i index first cell, j index in first cell second line.
-    for( int iter = 1 ; j <= (int)map.size()-2 ; i++ , j++, dw++, iter++)
-    {
-        // every time we end line
-        if (iter == width+1){
-            i++;
-            j++;
-            dl++;
-            dw=0;
-            iter = 1;
-        }
-
-        x[0] = (float)(dl * distanceL -5.0);
-        y[0] = (float)(dw * distanceW -5.0);
-        z[0] = (float)((float)(2*map[i])/(float)255.0);
-        color[0] = map[i];
-
-        x[1] = (float)(dl * distanceL -5.0);
-        y[1] = (float)((dw+1) * distanceW -5.0);
-        z[1] = (float)((float)(2*map[i+1])/(float)255.0);
-        color[1] = map[i+1];
-        
-        x[2] = (float)((dl+1) * distanceL -5.0);
-        y[2] = (float)((dw+1) * distanceW -5.0);
-        z[2] = (float)((float)(2*map[j+1])/(float)255.0);
-        color[2] = map[j+1];
-        
-        x[3] = (float)((dl+1) * distanceL -5.0);
-        y[3] = (float)(dw * distanceW -5.0);
-        z[3] = (float)((float)(2*map[j])/(float)255.0);
-        color[3] = map[j];
-
-        drawQuad(x,y,z,color);
-    }
-}
-
-
 void draw_axes(void)
 {
-float ORG[3] = {0,0,0};
+    float ORG[3] = {0,0,0};
 
-float XP[3] = {5,0,0}, XN[3] = {-5,0,0},
-      YP[3] = {0,5,0}, YN[3] = {0,-5,0},
-      ZP[3] = {0,0,5}, ZN[3] = {0,0,-5};
+    float XP[3] = {100,0,0}, XN[3] = {-100,0,0},
+          YP[3] = {0,100,0}, YN[3] = {0,-100,0},
+          ZP[3] = {0,0,100}, ZN[3] = {0,0,-100};
 
     glBegin (GL_LINES);
     glLineWidth (2.0);
 
-    glColor3f (1,0,0); // +X axis is red.
-    glVertex3fv (ORG);
-    glVertex3fv (XP ); 
-    glColor3f (1,0,0); // -X axis is red.
-    glVertex3fv (ORG);
-    glVertex3fv (XN ); 
-    
-    glColor3f (0,1,0); // +Y axis is green.
-    glVertex3fv (ORG);
-    glVertex3fv (YP );
-    glColor3f (0,1,0); // -Y axis is red.
-    glVertex3fv (ORG);
-    glVertex3fv (YN ); 
+    glColor3f (1,0,0); // X axis is red.
+    glVertex3fv (XN);
+    glVertex3fv (XP);
 
-    glColor3f (0,0,1); // +Z axis is blue.
-    glVertex3fv (ORG);
-    glVertex3fv (ZP ); 
-    glColor3f (0,0,1); // -Z axis is red.
-    glVertex3fv (ORG);
-    glVertex3fv (ZN ); 
+    glColor3f (0,1,0); // Y axis is green.
+    glVertex3fv (YN);
+    glVertex3fv (YP);
+
+
+    glColor3f (0,0,1); // Z axis is blue.
+    glVertex3fv (ZN);
+    glVertex3fv (ZP);
 
     glEnd();
 
-	glFlush(); //print to screen*/
+    glutSwapBuffers();
+}
+
+void drawHouse(void)
+{
+    float   houseLeftBackCorner[3] = {2.5,-2.5,7},
+            houseRightBackCorner[3] = {2.5,-5.5,7},
+            houseRightFrontCorner[3] = {5,-5.5,7},
+            houseLeftFrontCorner[3] = {5,-2.5,7};
+
+    glBegin(GL_QUADS);
+
+    glColor3f (1,1,1); // +Z axis is blue.
+    glVertex3fv (houseLeftBackCorner);
+    glVertex3fv (houseRightBackCorner);
+    glVertex3fv (houseRightFrontCorner);
+    glVertex3fv (houseLeftFrontCorner);
+
+    glEnd();
+
+    glutSwapBuffers();
 
 }
 
+// ----------------------------------------------------------
+// specialKeys() Callback Function
+// ----------------------------------------------------------
+void specialKeys( int key, int x, int y ) {
+
+  //  Right arrow - increase rotation by 5 degree
+  if (key == GLUT_KEY_RIGHT)
+    rotate_z += 5;
+
+  //  Left arrow - decrease rotation by 5 degree
+  else if (key == GLUT_KEY_LEFT)
+    rotate_z -= 5;
+
+  else if (key == GLUT_KEY_UP)
+    rotate_x += 5;
+
+  else if (key == GLUT_KEY_DOWN)
+    rotate_x -= 5;
+
+  //  Request display update
+  glutPostRedisplay();
+}
+
 void mydisplay(void)
-{	
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    /*buildPolygons();*/
+{
+    //  Clear screen and Z-buffer
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    // Reset transformations
+    glLoadIdentity();
+
+//    gluPerspective(45.0,                  //The camera angle
+//                   0.0 / 1.2,             //The width-to-height ratio
+//                   300.0,                   //The near z clipping coordinate
+//                   900.0);                //The far z clipping coordinate
+
+    // Rotate when user changes rotate_x and rotate_y
+    glRotatef( rotate_x, 1.0, 0.0, 0.0 );
+    glRotatef( rotate_y, 0.0, 1.0, 0.0 );
+    glRotatef( rotate_z, 0.0, 1.0, 1.0 );
+
+    drawHouse();
     draw_axes();
 
 
@@ -262,20 +138,24 @@ void mydisplay(void)
 
 int main(int argc, char**argv) {
 
-    // Parsing input files
-    /*parseMap(&map,&width,&legnth);
-    parseColorTable(colors);
-    parseEye(&eye);*/
-
     glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
 	glutInitWindowSize(900, 900);
-	glutCreateWindow("Map");
+	glutCreateWindow("Assignment 2");
 
-	init();
+    //  Enable Z-buffer depth test
+	glEnable(GL_DEPTH_TEST);
 
+    // Callback functions
 	glutDisplayFunc(mydisplay);
+//    glutReshapeFunc(changeSize);
+//	glutIdleFunc(mydisplay);
+	glutSpecialFunc(specialKeys);
+
+    //  Pass control to GLUT for events
     glutMainLoop();
 
     return 0;
 }
+
