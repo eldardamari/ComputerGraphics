@@ -254,62 +254,13 @@ float XP[3] = {5,0,0}, XN[3] = {-5,0,0},
 }
 void draw_wheel(void)
 {
-    /*glColor3f(0, 1, 0);
-    glutSolidSphere(2, 20, 20); */
-    int iPivot  = 1;
     GLfloat z, y,angle;
 
-     /*glBegin(GL_TRIANGLE_FAN);
-
-        glVertex3f(0.0f,0.0f,3.0f);
-        for(angle=0.0f; angle < (2.0f*GL_PI); angle +=(GL_PI/8.0f)) 
-        {
-            cout << "here " << angle << endl; 
-                x = 3*cos(angle);
-                y = 3*sin(angle);
-
-                if((iPivot %2) == 0) 
-                        glColor3f(0.0f,1.0f,0.0f);
-                else
-                        glColor3f(1.0f,0.0f,0.0f);
-
-                iPivot++;
-               glVertex3f(0, x,y);
-        }
-        glEnd(); */
-        /*glBegin(GL_TRIANGLE_FAN);
-
-       // Center of fan is at the origin
-        glVertex3f(0.0f, 0.0f,3.0f);
-        for(angle = 0.0f; angle < (2.0f*GL_PI); angle += (GL_PI/8.0f))
-                {
-                // Calculate x and y position of the next vertex
-                y   = 3.0f*cos(angle);
-                z   = 3.0f*sin(angle);
-
-               // Alternate color between red and green
-               if((iPivot %2) == 0)
-                       glColor3f(0.0f, 1.0f, 0.0f);
-               else
-                       glColor3f(1.0f, 0.0f, 0.0f);
-
-               // Increment pivot to change color next time
-               iPivot++;
-
-               // Specify the next vertex for the triangle fan
-               glVertex3f(y,0,z);
-
-               }
-
-        // Done drawing the fan that covers the bottom
-        glEnd();*/
-
-    
     glBegin(GL_TRIANGLE_FAN);
     glColor3f(1,0,0);
 
     glVertex3f(0.5,0,3);
-    for (angle = 0.0f ; angle < 360 ; angle += 45.0f) {
+    for (angle = 0.0f ; angle < 360 ; angle += 10.0f) {
         z = 3.0f*sin(angle*GL_PI/180) + 3.0f;
         y = 3.0f*cos(angle*GL_PI/180);
         cout << "y = " << y << " z = " << z << endl;
@@ -317,8 +268,8 @@ void draw_wheel(void)
     }
     glEnd();
     
-    glBegin(GL_TRIANGLES);
 
+    glBegin(GL_TRIANGLES);
     glColor3f(1,0,0);
 
     glVertex3f(0.5,0,3);
@@ -333,7 +284,7 @@ void draw_wheel(void)
     glColor3f(0,1,0);
 
     glVertex3f(-0.5,0,3);
-    for (angle = 0.0f ; angle < 360 ; angle += 45.0f) {
+    for (angle = 0.0f ; angle < 360 ; angle += 10.0f) {
         z = 3.0f*sin(angle*GL_PI/180) + 3.0f;
         y = 3.0f*cos(angle*GL_PI/180);
         cout << "y = " << y << " z = " << z << endl;
@@ -352,41 +303,6 @@ void draw_wheel(void)
     glVertex3f(-0.5, y , z);
 
     glEnd();
-
-	/*glVertex3f(0.5, -3  , 3);
-	glVertex3f(0.5, -1.5,5.6);
-	glVertex3f(0.5, 0   ,6);
-	glVertex3f(0.5, 1.5,5.6);
-	glVertex3f(0.5, 3 , 3);
-	glVertex3f(0.5, 1.5,0);
-	glVertex3f(0.5, 0,0);
-	glVertex3f(0.5, -1.5,0);
-
-    glEnd();
-    
-    glBegin(GL_TRIANGLES);
-    glColor3f(1,0,0);
-    glVertex3f(0.5,0,3);
-	glVertex3f(0.5, -3  , 3);
-	glVertex3f(0.5, -1.5,0);
-
-    glEnd();*/
-
-    /*glLineWidth(10);
-	glBegin(GL_QUADS);
-
-	glColor3f(1, 0, 0);
-	glVertex3f(0, -1.5, 3);
-
-	glColor3f(1, 0, 0);
-	glVertex3f(0, 0, 4.5);
-
-	glColor3f(1, 0, 0);
-	glVertex3f(0, 1.5, 3);
-
-	glColor3f(1, 0, 0);
-	glVertex3f(0,0,1.5);
-	glEnd();*/
 
     glFlush();
 
