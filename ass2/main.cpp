@@ -158,20 +158,25 @@ void drawPyramid(double x1, double y1, double z1, double x2, double y2, double z
 }
 
 
-void drawHouse(/*double x1, double y1, double x1, double x2, double y2, double z2*/)
+void drawHouse(double x1, double y1, double z1, double x2, double y2, double z2)
 {
-    double normalizedZ1 = (7 * MAX_HEIGHT)/255;
-    double normalizedZ2 = (7 * MAX_HEIGHT)/255;
-    drawCube(2.5, -2.5 , normalizedZ1 , 5, -5.5, normalizedZ2, 3.5);
+    double normalizedZ1 = (z1 * MAX_HEIGHT)/255;
+    double normalizedZ2 = (z2 * MAX_HEIGHT)/255;
+    drawCube(x1, y1, normalizedZ1, x2, y2, normalizedZ2, 3.5);
 
-    double centerX = 2.5 + ((5 - 2.5) / 2);
-    double centerY = -2.5 + ((-5.5 - (-2.5)) / 2);
+    double centerX = x1 + ((x2 - (x1)) / 2);
+    double centerY = y1 + ((y2 - (y1)) / 2);
     double centerZ = 5;
     // ROOF
-    drawPyramid(2.5, -2.5, 3.5, 5, -5.5, 3.5, centerX, centerY, centerZ );
+    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
 
     // DOOR
-
+//    glBegin(GL_QUADS);
+//    glVertex3f( x1, y1, z1 );
+//    glVertex3f( x1, y2, z1 );
+//    glVertex3f( x2, y2, z2 );
+//    glVertex3f( x2, y1, z2 );
+//    glEnd();
 
     // WINDOW
 
@@ -218,7 +223,7 @@ void mydisplay(void)
 
     draw_axes();
 
-    drawHouse();
+    drawHouse(2.5,-2.5,7,5,-5.5,7);
 
   glutSwapBuffers();
 
