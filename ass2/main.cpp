@@ -13,12 +13,13 @@
 #endif
 /*#define GL_PI 3.1415926535897932384626433832795*/
 
-
+#define max_hight 5.5
 using namespace std;
 
 double rotate_y = 0;
 double rotate_x = 0;
 double rotate_z = 0;
+GLfloat zoomFactor = 1.0f;
 
 void init()
 {
@@ -78,42 +79,42 @@ void drawHouse(void)
     //Multi-colored side - FRONT
       glBegin(GL_POLYGON);
 
-      glColor3f( 1.0, 0.0, 0.0 );     glVertex3f(  0.5, -0.5, -0.5 );      // P1 is red
-      glColor3f( 0.0, 1.0, 0.0 );     glVertex3f(  0.5,  0.5, -0.5 );      // P2 is green
-      glColor3f( 0.0, 0.0, 1.0 );     glVertex3f( -0.5,  0.5, -0.5 );      // P3 is blue
-      glColor3f( 1.0, 0.0, 1.0 );     glVertex3f( -0.5, -0.5, -0.5 );      // P4 is purple
+      glColor3f( 1.0, 0.0, 0.0 );     glVertex3f(   2.5,    -2.5,   0   );      // P1 is red
+      glColor3f( 0.0, 1.0, 0.0 );     glVertex3f(   2.5,    -2.5,   7   );      // P2 is green
+      glColor3f( 0.0, 0.0, 1.0 );     glVertex3f(     5,    -2.5,   7   );      // P3 is blue
+      glColor3f( 1.0, 0.0, 1.0 );     glVertex3f(     5,    -2.5,   0   );      // P4 is purple
 
       glEnd();
 
       // White side - BACK
-      glBegin(GL_POLYGON);
-      glColor3f(   1.0,  1.0, 1.0 );
-      glVertex3f(   5,      -5.5,   0   );
-      glVertex3f(   5,      -5.5,   7   );
+      glBegin(GL_QUADS);
+      glColor3f(   0.0,  0.0, 0.0 );
+      glVertex3f( 2.5,      -5.5,   0   );
+      glVertex3f( 2.5,      -5.5,   7   );
       glVertex3f(   5,      -5.5,   7   );
       glVertex3f(   5,      -5.5,   0   );
       glEnd();
 
       // Purple side - RIGHT
-      glBegin(GL_POLYGON);
+      glBegin(GL_QUADS);
       glColor3f(  1.0,  0.0,  1.0 );
       glVertex3f(   5,      -2.5,   0   );
-      glVertex3f(   5,      -5.5,   0   );
-      glVertex3f(   5,      -5.5,   7   );
       glVertex3f(   5,      -2.5,   7   );
+      glVertex3f(   5,      -5.5,   7   );
+      glVertex3f(   5,      -5.5,   0   );
       glEnd();
 
       // Green side - LEFT
-      glBegin(GL_POLYGON);
+      glBegin(GL_QUADS);
       glColor3f(   0.0,  1.0,  0.0 );
       glVertex3f(   2.5,    -2.5,   0   );
-      glVertex3f(   2.5,    -5.5,   0   );
-      glVertex3f(   2.5,    -5.5,   7   );
       glVertex3f(   2.5,    -2.5,   7   );
+      glVertex3f(   2.5,    -5.5,   7   );
+      glVertex3f(   2.5,    -5.5,   0   );
       glEnd();
 
       // Blue side - TOP
-      glBegin(GL_POLYGON);
+      glBegin(GL_QUADS);
       glColor3f(   0.0,  0.0,  1.0 );
       glVertex3f(   2.5,    -2.5,   7   );
       glVertex3f(   2.5,    -5.5,   7   );
@@ -130,12 +131,44 @@ void drawHouse(void)
       glVertex3f(   5,      -2.5,   0   );
       glEnd();
 
+      // ROOF - Right
+      glBegin(GL_TRIANGLES);
+      glColor3f (   1.0,    0.0,    0.0 );
+      glVertex3f(     5,    -2.5,   7   );
+      glVertex3f(  3.75,    -4.0,   9   );
+      glVertex3f(     5,    -5.5,   7   );
+      glEnd();
+
+      // ROOF - Back
+      glBegin(GL_TRIANGLES);
+      glColor3f (   1.0,    0.0,    0.0 );
+      glVertex3f(   2.5,    -5.5,   7   );
+      glVertex3f(  3.75,    -4.0,   9   );
+      glVertex3f(     5,    -5.5,   7   );
+      glEnd();
+
+      // ROOF - Left
+      glBegin(GL_TRIANGLES);
+      glColor3f (   1.0,    0.0,    0.0 );
+      glVertex3f(   2.5,    -2.5,   7   );
+      glVertex3f(  3.75,    -4.0,   9   );
+      glVertex3f(   2.5,    -5.5,   7   );
+      glEnd();
+
+      // ROOF - Front
+      glBegin(GL_TRIANGLES);
+      glColor3f (   1.0,    0.0,    0.0 );
+      glVertex3f(   2.5,    -2.5,   7   );
+      glVertex3f(  3.75,    -4.0,   9   );
+      glVertex3f(     5,    -2.5,   7   );
+      glEnd();
+
       glutSwapBuffers();
 
 }
 
 // ----------------------------------------------------------
-// specialKeys() Callback Function
+// zoomFactoospecialKeys() Callback Function
 // ----------------------------------------------------------
 void specialKeys( int key, int x, int y ) {
 
@@ -149,10 +182,20 @@ void specialKeys( int key, int x, int y ) {
     rotate_x += 10;
   else if (key == GLUT_KEY_DOWN)
     rotate_x -= 10;
+  else if (key == GLUT_KEY_F2)
+    zoomFactor += 10;
+  else if (key == GLUT_KEY_F3)
+   zoomFactor  -= 10;
   //  Request display update
   glutPostRedisplay();
 }
-
+void setProjectionMatrix (int width, int height)
+{
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluPerspective (50.0*zoomFactor, (float)width/(float)height, 1.0f, 1.0f);
+   /* ...Where 'zNear' and 'zFar' are up to you to fill in. */
+}
 void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
 {
     GLfloat z, y,angle;
@@ -162,22 +205,25 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     int i;
     z = 0.0f;
     y = 0.0f;
+    GLfloat rCz = Cz;
+    /*Cz = Cz*max_hight/255.0f;*/
+
 
     glBegin(GL_TRIANGLE_FAN);
     glColor3f(1,0,0);
-    Cx += 0.5;
+    Cx += 0.2;
 
     glVertex3f(Cx,Cy,Cz);
     for (i = 0, angle = 0.0f ; angle < 360.0f ; angle += 10.0f, i++) {
-        z = 3.0f*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
-        y = 3.0f*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
+        z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
+        y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
         glVertex3f(Cx, y , z);
         fPlate[i][0] = Cx;
         fPlate[i][1] = y;
         fPlate[i][2] = z;
     }
-    z = 3.0f*(GLfloat)sin(0.0f) + Cz;
-    y = 3.0f*(GLfloat)cos(0.0f) + Cy;
+    z = rCz*(GLfloat)sin(0.0f) + Cz;
+    y = rCz*(GLfloat)cos(0.0f) + Cy;
     glVertex3f(Cx , y , z);
 
     glEnd();
@@ -185,19 +231,19 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
 
     glBegin(GL_TRIANGLE_FAN);
     glColor3f(0,1,0);
-    Cx -= 0.5;
+    Cx -= 0.2;
 
     glVertex3f(Cx,Cy,Cz);
     for (i=0,angle = 0.0f ; angle < 360 ; angle += 10.0f,i++) {
-        z = 3.0f*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
-        y = 3.0f*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
+        z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
+        y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
         glVertex3f(Cx, y , z);
         bPlate[i][0] = Cx;
         bPlate[i][1] = y;
         bPlate[i][2] = z;
     }
-    z = 3.0f*(GLfloat)sin(0.0f) + Cz;
-    y = 3.0f*(GLfloat)cos(0.0f) + Cy;
+    z = rCz*(GLfloat)sin(0.0f) + Cz;
+    y = rCz*(GLfloat)cos(0.0f) + Cy;
     glVertex3f(Cx, y , z);
     glEnd();
     
@@ -217,6 +263,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     glFlush();
 }
 
+
 void mydisplay(void)
 {	
     //  Clear screen and Z-buffer
@@ -232,11 +279,13 @@ void mydisplay(void)
     glMatrixMode(GL_MODELVIEW); /* switch matrix mode */
 
     draw_axes();
-    draw_wheel(0.0f,0.0f,3.0f);
-    draw_wheel(3.0f,0.0f,3.0f);
-    draw_wheel(0.0f,10.0f,3.0f);
-    draw_wheel(3.0f,10.0f,3.0f);
+    draw_wheel(0.0f ,0.0f   ,3.0f);
+    draw_wheel(3.0f ,0.0f   ,3.0f);
+    draw_wheel(0.0f ,10.0f  ,3.0f);
+    draw_wheel(3.0f ,10.0f  ,3.0f);
+    drawHouse();
 }
+
 
 int main(int argc, char**argv) {
 
@@ -250,7 +299,7 @@ int main(int argc, char**argv) {
 	glEnable(GL_DEPTH_TEST);
 
 	glClearColor(1, 1, 1, 1);
-	gluPerspective(60, 1, 15, 100);
+	gluPerspective(45, 1, 15, 100);
     gluLookAt(0, 0, 30, 0, 0, 0, 0, 1, 0);  //define view direction
 
     // Callback functions
