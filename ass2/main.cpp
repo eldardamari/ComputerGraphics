@@ -157,7 +157,6 @@ void drawPyramid(double x1, double y1, double z1, double x2, double y2, double z
     glEnd();
 }
 
-
 void drawHouse(double x1, double y1, double z1, double x2, double y2, double z2)
 {
     double normalizedZ1 = (z1 * MAX_HEIGHT)/255;
@@ -171,14 +170,31 @@ void drawHouse(double x1, double y1, double z1, double x2, double y2, double z2)
     drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
 
     // DOOR
-//    glBegin(GL_QUADS);
-//    glVertex3f( x1, y1, z1 );
-//    glVertex3f( x1, y2, z1 );
-//    glVertex3f( x2, y2, z2 );
-//    glVertex3f( x2, y1, z2 );
-//    glEnd();
+    glColor3f (   0.5,    0.5,    0.5 );
+    glBegin(GL_QUADS);
+    glVertex3f( centerX+0.5, y1, normalizedZ1 );
+    glVertex3f( centerX+0.5, y1, normalizedZ1 + 1.5 );
+    glVertex3f( centerX-0.5, y1, normalizedZ2 + 1.5 );
+    glVertex3f( centerX-0.5, y1, normalizedZ2 );
+    glEnd();
 
-    // WINDOW
+    // WINDOW - Right
+    glColor3f (   0.0,    1.0,    0.0 );
+    glBegin(GL_QUADS);
+    glVertex3f( x2, centerY+1, normalizedZ1 + 1.5 );
+    glVertex3f( x2, centerY+1, normalizedZ1 + 2.5 );
+    glVertex3f( x2, centerY-1, normalizedZ2 + 2.5 );
+    glVertex3f( x2, centerY-1, normalizedZ2 +1.5 );
+    glEnd();
+
+    // WINDOW - Left
+    glColor3f (   0.0,    1.0,    0.0 );
+    glBegin(GL_QUADS);
+    glVertex3f( x1, centerY+1, normalizedZ1 + 1.5 );
+    glVertex3f( x1, centerY+1, normalizedZ1 + 2.5 );
+    glVertex3f( x1, centerY-1, normalizedZ2 + 2.5 );
+    glVertex3f( x1, centerY-1, normalizedZ2 +1.5 );
+    glEnd();
 
     glutSwapBuffers();
 }
@@ -229,10 +245,10 @@ void mydisplay(void)
 
 }
 
-int main(int argc, char**argv) {
-
+int main(int argc, char**argv)
+{
     glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
 	glutInitWindowSize(900, 900);
 	glutCreateWindow("Assignment 2");
