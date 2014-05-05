@@ -17,6 +17,8 @@ double rotate_y = 0;
 double rotate_x = 0;
 double rotate_z = 0;
 
+double MAX_HEIGHT = 5.5;
+
 void init()
 {
 	float modelMatrix[16], projectionMatrix[16];
@@ -68,65 +70,112 @@ void draw_axes(void)
     glutSwapBuffers();
 }
 
-void drawHouse(void)
+void drawCube(double x1, double y1, double z1, double x2, double y2, double z2, double h)
 {
-    //Multi-colored side - FRONT
-      glBegin(GL_POLYGON);
+      glColor3f( 1.0,  1.0, 1.0 );
 
-      glColor3f( 1.0, 0.0, 0.0 );     glVertex3f(  0.5, -0.5, -0.5 );      // P1 is red
-      glColor3f( 0.0, 1.0, 0.0 );     glVertex3f(  0.5,  0.5, -0.5 );      // P2 is green
-      glColor3f( 0.0, 0.0, 1.0 );     glVertex3f( -0.5,  0.5, -0.5 );      // P3 is blue
-      glColor3f( 1.0, 0.0, 1.0 );     glVertex3f( -0.5, -0.5, -0.5 );      // P4 is purple
-
-      glEnd();
-
-      // White side - BACK
-      glBegin(GL_POLYGON);
-      glColor3f(   1.0,  1.0, 1.0 );
-      glVertex3f(   5,      -5.5,   0   );
-      glVertex3f(   5,      -5.5,   7   );
-      glVertex3f(   5,      -5.5,   7   );
-      glVertex3f(   5,      -5.5,   0   );
-      glEnd();
-
-      // Purple side - RIGHT
-      glBegin(GL_POLYGON);
-      glColor3f(  1.0,  0.0,  1.0 );
-      glVertex3f(   5,      -2.5,   0   );
-      glVertex3f(   5,      -5.5,   0   );
-      glVertex3f(   5,      -5.5,   7   );
-      glVertex3f(   5,      -2.5,   7   );
-      glEnd();
-
-      // Green side - LEFT
-      glBegin(GL_POLYGON);
-      glColor3f(   0.0,  1.0,  0.0 );
-      glVertex3f(   2.5,    -2.5,   0   );
-      glVertex3f(   2.5,    -5.5,   0   );
-      glVertex3f(   2.5,    -5.5,   7   );
-      glVertex3f(   2.5,    -2.5,   7   );
-      glEnd();
-
-      // Blue side - TOP
-      glBegin(GL_POLYGON);
-      glColor3f(   0.0,  0.0,  1.0 );
-      glVertex3f(   2.5,    -2.5,   7   );
-      glVertex3f(   2.5,    -5.5,   7   );
-      glVertex3f(   5,      -5.5,   7   );
-      glVertex3f(   5,      -2.5,   7   );
-      glEnd();
-
-      // Red side - BOTTOM
+      //side - FRONT
       glBegin(GL_QUADS);
-      glColor3f (   1.0,    0.0,    0.0 );
-      glVertex3f(   2.5,    -2.5,   0   );
-      glVertex3f(   2.5,    -5.5,   0   );
-      glVertex3f(   5,      -5.5,   0   );
-      glVertex3f(   5,      -2.5,   0   );
+      glVertex3f( x1, y1, z1 );      // P1 is red
+      glVertex3f( x1, y1, h  );      // P2 is green
+      glVertex3f( x2, y1, h  );      // P3 is blue
+      glVertex3f( x2, y1, z1 );      // P4 is purple
+
       glEnd();
 
-      glutSwapBuffers();
+      //side - BACK
+      glBegin(GL_QUADS);
+      glVertex3f( x1, y2, z2 );
+      glVertex3f( x1, y2, h );
+      glVertex3f( x2, y2, h );
+      glVertex3f( x2, y2, z2 );
+      glEnd();
 
+      //side - RIGHT
+      glBegin(GL_QUADS);
+      glVertex3f( x2, y1, z1 );
+      glVertex3f( x2, y1, h );
+      glVertex3f( x2, y2, h );
+      glVertex3f( x2, y2, z2 );
+      glEnd();
+
+      //side - LEFT
+      glBegin(GL_QUADS);
+      glVertex3f( x1, y1, z1 );
+      glVertex3f( x1, y1, h );
+      glVertex3f( x1, y2, h );
+      glVertex3f( x1, y2, z2 );
+      glEnd();
+
+      //side - TOP
+      glBegin(GL_QUADS);
+      glVertex3f( x1, y1, h );
+      glVertex3f( x1, y2, h );
+      glVertex3f( x2, y2, h );
+      glVertex3f( x2, y1, h );
+      glEnd();
+
+      //side - BOTTOM
+      glBegin(GL_QUADS);
+      glVertex3f( x1, y1, z1 );
+      glVertex3f( x1, y2, z1 );
+      glVertex3f( x2, y2, z2 );
+      glVertex3f( x2, y1, z2 );
+      glEnd();
+}
+
+void drawPyramid(double x1, double y1, double z1, double x2, double y2, double z2, double centerX, double centerY, double centerZ )
+{
+    glColor3f (   1.0,    0.0,    0.0 );
+
+    // ROOF - Right
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x2, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x2, y2, z2 );
+    glEnd();
+
+    // ROOF - Back
+    glBegin(GL_TRIANGLES);
+    glVertex3f(   x1,    y2,   z2   );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f(     x2,    y2,   z1   );
+    glEnd();
+
+    // ROOF - Left
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x1, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x1, y2, z1 );
+    glEnd();
+
+    // ROOF - Front
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x1, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x2, y1, z2 );
+    glEnd();
+}
+
+
+void drawHouse(/*double x1, double y1, double x1, double x2, double y2, double z2*/)
+{
+    double normalizedZ1 = (7 * MAX_HEIGHT)/255;
+    double normalizedZ2 = (7 * MAX_HEIGHT)/255;
+    drawCube(2.5, -2.5 , normalizedZ1 , 5, -5.5, normalizedZ2, 3.5);
+
+    double centerX = 2.5 + ((5 - 2.5) / 2);
+    double centerY = -2.5 + ((-5.5 - (-2.5)) / 2);
+    double centerZ = 5;
+    // ROOF
+    drawPyramid(2.5, -2.5, 3.5, 5, -5.5, 3.5, centerX, centerY, centerZ );
+
+    // DOOR
+
+
+    // WINDOW
+
+    glutSwapBuffers();
 }
 
 // ----------------------------------------------------------
