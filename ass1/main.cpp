@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdlib.h>
 
-#include <GLUT/glut.h>
+#include <GL/glut.h>
 
 using namespace std;
 
