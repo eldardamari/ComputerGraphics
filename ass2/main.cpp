@@ -43,11 +43,20 @@ void init()
 
 void drawSun(void)
 {
-
     glPushMatrix();
-        /*glRotatef(30,15,7,8);*/
-        glRotatef(angle,1,0,0);
 
+    Vector3f a;
+    a.x = 0;
+    a.y = 0;
+    a.z = MAX_HEIGHT;
+    Vector3f b;
+    b.x = 15;
+    b.y = 7;
+    b.z = 8;
+    Vector3f c;
+    c = Vector3f::crossProduct(a,b);
+
+        glRotatef(angle,c.x,c.y,c.z);
 
         glTranslatef(15,7,8);
         glColor3f(0.5f, 0.7f , 0.0f); 
@@ -330,7 +339,7 @@ void drawCar(void) {
     drawCarBody();
 }
 void rotateSun(void) {
-    angle += 0.15;
+    angle += 1.5;
     glutPostRedisplay();
 }
 
