@@ -30,6 +30,44 @@ GLfloat rotate_x = 0;
 GLfloat rotate_z = 0;
 GLfloat zoom = 1;
 GLfloat angle = 0;
+GLfloat light = 0;
+
+GLfloat light_ambient[] =   {0.2, 0.2, 0.2, 1.0}; 
+GLfloat light_diffuse[] =   {1.0, 1.0, 1.0, 1.0}; 
+GLfloat light_specular[] =  {1.0, 1.0, 1.0, 1.0};
+GLfloat light_position[] =  {0, 0, 22, 1.0};
+GLfloat light_direction[]=  {0,0,0,0};
+
+void initLight(void)
+{
+    // Light
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction); 
+    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45);
+
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_LIGHTING);
+
+    glEnable(GL_LIGHT0);
+
+    GLfloat mat_a[] = {material[0], material[1], material[2], 1.0}; 
+    GLfloat mat_d[] = {material[3], material[4], material[5], 1.0}; 
+    GLfloat mat_s[] = {material[6], material[7], material[8], 1.0}; 
+    GLfloat low_sh[] = {5.0};
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,  mat_a); 
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,  mat_d); 
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_s); 
+    glMaterialfv(GL_FRONT, GL_SHININESS,low_sh); 
+
+
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_NORMALIZE); // maintain normal vectors size
+}
 
 void init()
 {
@@ -38,10 +76,11 @@ void init()
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
 
-	gluPerspective(60, 1, 1, 100);
-	gluLookAt(0,0, 30, 0,0,0, 0, 1, 0);  //define view direction
+        gluPerspective(60, 1, 1, 100);
+        gluLookAt(0,0, 30, 0,0,0, 0, 1, 0);  //define view direction
 
-    MAX_HEIGHT = scene.at(2);
+        MAX_HEIGHT = scene.at(2);
+        initLight();
 
 	/* return to modelview mode */
 	glMatrixMode(GL_MODELVIEW);
@@ -435,15 +474,32 @@ void drawSun(void)
 
         glRotatef(angle,c.x,c.y,c.z);
         glTranslatef(sun[0],sun[1],sun[2]);
+        
         glColor3f(sun[3],sun[4],sun[5]);
         glutSolidSphere(1,36,36);
+
+        light_direction[0] = -sun[0];
+        light_direction[1] = -sun[1];
+        light_direction[2] = -sun[2];
+
+        light_position[0] = sun[0];
+        light_position[1] = sun[1];
+        light_position[1] = sun[2];
+
+        initLight();
+
     glPopMatrix();
 }
 
 void rotateSun(void) 
 {
-    angle += 1.5;
+    angle += 0.4; // 10 seconds loop 
     glutPostRedisplay();
+}
+
+void resetlight(void) 
+{
+    initLight();
 }
 
 void draw_plane(void)
@@ -454,7 +510,7 @@ void draw_plane(void)
 
         glVertex3f(0,0,0);
         glVertex3f(0,0,MAX_HEIGHT);
-        glVertex3f(15,7,8);
+        glVertex3f(1,1,1);
 
     glEnd();
 }
@@ -463,15 +519,19 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[])
 {
 	glBegin(GL_QUADS);
 
+    glNormal3f(sun[0],sun[1],sun[2]);
 	glColor3f(1,0,0);
 	glVertex3f(x[0], y[0], z[0]);
 
+    glNormal3f(sun[0],sun[1],sun[2]);
 	glColor3f(1,1,0);
 	glVertex3f(x[1], y[1], z[1]);
 
+    glNormal3f(sun[0],sun[1],sun[2]);
 	glColor3f(1,0,0);
 	glVertex3f(x[2], y[2], z[2]);
 
+    glNormal3f(sun[0],sun[1],sun[2]);
 	glColor3f(1,0,0);
 	glVertex3f(x[3], y[3], z[3]);
 
@@ -641,6 +701,7 @@ void mydisplay(void)
               house[3],house[4],house[5]);
     drawSun();
     buildPolygons();
+    resetlight();
 
     glutSwapBuffers();
 }
@@ -665,6 +726,7 @@ int main(int argc, char**argv)
 
     // Callback functions
 	glutDisplayFunc(mydisplay);
+//	glutIdleFunc(resetlight);
 	glutIdleFunc(rotateSun);
     glutSpecialFunc(specialKeys);
 
