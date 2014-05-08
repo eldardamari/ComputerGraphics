@@ -35,11 +35,14 @@ GLfloat light = 0;
 GLfloat light_ambient[] =   {0.2, 0.2, 0.2, 1.0}; 
 GLfloat light_diffuse[] =   {1.0, 1.0, 1.0, 1.0}; 
 GLfloat light_specular[] =  {1.0, 1.0, 1.0, 1.0};
-GLfloat light_position[] =  {0, 0, 22, 1.0};
-GLfloat light_direction[]=  {0,0,0,0};
+GLfloat light_position[] =  {22, 0, 0, 1.0};
+GLfloat light_direction[]=  {0,0,0};
 
 void initLight(void)
 {
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_LIGHTING);
+
     // Light
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
@@ -49,20 +52,17 @@ void initLight(void)
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction); 
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45);
 
-    glShadeModel(GL_SMOOTH);
-    glEnable(GL_LIGHTING);
-
     glEnable(GL_LIGHT0);
 
     GLfloat mat_a[] = {material[0], material[1], material[2], 1.0}; 
     GLfloat mat_d[] = {material[3], material[4], material[5], 1.0}; 
     GLfloat mat_s[] = {material[6], material[7], material[8], 1.0}; 
-    GLfloat low_sh[] = {5.0};
+    GLfloat low_sh[]= {5.0};
 
     glMaterialfv(GL_FRONT, GL_AMBIENT,  mat_a); 
     glMaterialfv(GL_FRONT, GL_DIFFUSE,  mat_d); 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_s); 
-    glMaterialfv(GL_FRONT, GL_SHININESS,low_sh); 
+    glMaterialfv(GL_FRONT, GL_SHININESS,low_sh);
 
 
     glEnable(GL_COLOR_MATERIAL);
@@ -375,21 +375,24 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     /*Cz = Cz*max_hight/255.0f;*/
 
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(0.9,0.9,0.9);
-    Cx += 0.2;
+        glColor3f(0.9,0.9,0.9);
+        Cx += 0.2;
 
-    glVertex3f(Cx,Cy,Cz);
-    for (i = 0, angle = 0.0f ; angle < 360.0f ; angle += 10.0f, i++) {
-        z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
-        y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
-        glVertex3f(Cx, y , z);
-        fPlate[i][0] = Cx;
-        fPlate[i][1] = y;
-        fPlate[i][2] = z;
-    }
-    z = rCz*(GLfloat)sin(0.0f) + Cz;
-    y = rCz*(GLfloat)cos(0.0f) + Cy;
-    glVertex3f(Cx , y , z);
+        glNormal3f(Cx,Cy,Cz);
+        glVertex3f(Cx,Cy,Cz);
+        for (i = 0, angle = 0.0f ; angle < 360.0f ; angle += 10.0f, i++) {
+            z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
+            y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
+            glNormal3f(Cx,y,z);
+            glVertex3f(Cx, y , z);
+            fPlate[i][0] = Cx;
+            fPlate[i][1] = y;
+            fPlate[i][2] = z;
+        }
+        z = rCz*(GLfloat)sin(0.0f) + Cz;
+        y = rCz*(GLfloat)cos(0.0f) + Cy;
+        glNormal3f(Cx,y,z);
+        glVertex3f(Cx,y,z);
     glEnd();
 
     glBegin(GL_TRIANGLE_FAN);
@@ -400,6 +403,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     for (i=0,angle = 0.0f ; angle < 360 ; angle += 10.0f,i++) {
         z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
         y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
+        glNormal3f(Cx,y,z);
         glVertex3f(Cx, y , z);
         bPlate[i][0] = Cx;
         bPlate[i][1] = y;
@@ -407,6 +411,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     }
     z = rCz*(GLfloat)sin(0.0f) + Cz;
     y = rCz*(GLfloat)cos(0.0f) + Cy;
+    glNormal3f(Cx,y,z);
     glVertex3f(Cx, y , z);
     glEnd();
 
@@ -414,10 +419,14 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     glBegin(GL_TRIANGLE_STRIP);
     glColor3f(0,0,1);
     for (i = 0 ; i < 36 ; i++) {
+        glNormal3f( fPlate[i][0], fPlate[i][1], fPlate[i][2]); 
         glVertex3f( fPlate[i][0], fPlate[i][1], fPlate[i][2]); 
+        glNormal3f( bPlate[i][0], bPlate[i][1], bPlate[i][2]); 
         glVertex3f( bPlate[i][0], bPlate[i][1], bPlate[i][2]); 
     }
+        glNormal3f( fPlate[0][0], fPlate[0][1], fPlate[0][2]); 
         glVertex3f( fPlate[0][0], fPlate[0][1], fPlate[0][2]); 
+        glNormal3f( bPlate[0][0], bPlate[0][1], bPlate[0][2]);
         glVertex3f( bPlate[0][0], bPlate[0][1], bPlate[0][2]);
     glEnd();
 }
@@ -457,6 +466,16 @@ void drawCar(void)
     drawCarBody();
 }
 
+void draw_plane(void)
+{
+    glBegin(GL_LINE_LOOP);
+        glColor3f(0,0,0);
+        glVertex3f(0,0,0);
+        glVertex3f(0,0,MAX_HEIGHT);
+        glVertex3f(sun[0],sun[1],sun[2]);
+    glEnd();
+}
+
 void drawSun(void)
 {
     Vector3f a;
@@ -477,15 +496,16 @@ void drawSun(void)
         
         glColor3f(sun[3],sun[4],sun[5]);
         glutSolidSphere(1,36,36);
-
+        
         light_direction[0] = -sun[0];
         light_direction[1] = -sun[1];
         light_direction[2] = -sun[2];
 
         light_position[0] = sun[0];
         light_position[1] = sun[1];
-        light_position[1] = sun[2];
+        light_position[2] = sun[2];
 
+        draw_plane();
         initLight();
 
     glPopMatrix();
@@ -493,7 +513,7 @@ void drawSun(void)
 
 void rotateSun(void) 
 {
-    angle += 0.4; // 10 seconds loop 
+    angle += 0.6; // 10 seconds loop 
     glutPostRedisplay();
 }
 
@@ -502,39 +522,24 @@ void resetlight(void)
     initLight();
 }
 
-void draw_plane(void)
-{
-    glBegin(GL_LINE_LOOP);
-
-        glColor3f(0,0,0);
-
-        glVertex3f(0,0,0);
-        glVertex3f(0,0,MAX_HEIGHT);
-        glVertex3f(1,1,1);
-
-    glEnd();
-}
-
 void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[])
 {
 	glBegin(GL_QUADS);
+        glNormal3f(x[0],y[0],z[0]);
+        glColor3f(1,0,0);
+        glVertex3f(x[0], y[0], z[0]);
 
-    glNormal3f(sun[0],sun[1],sun[2]);
-	glColor3f(1,0,0);
-	glVertex3f(x[0], y[0], z[0]);
+        glNormal3f(x[1],y[1],z[1]);
+        glColor3f(1,1,0);
+        glVertex3f(x[1], y[1], z[1]);
 
-    glNormal3f(sun[0],sun[1],sun[2]);
-	glColor3f(1,1,0);
-	glVertex3f(x[1], y[1], z[1]);
+        glNormal3f(x[2],y[2],z[2]);
+        glColor3f(1,0,0);
+        glVertex3f(x[2], y[2], z[2]);
 
-    glNormal3f(sun[0],sun[1],sun[2]);
-	glColor3f(1,0,0);
-	glVertex3f(x[2], y[2], z[2]);
-
-    glNormal3f(sun[0],sun[1],sun[2]);
-	glColor3f(1,0,0);
-	glVertex3f(x[3], y[3], z[3]);
-
+        glNormal3f(x[3],y[3],z[3]);
+        glColor3f(1,0,0);
+        glVertex3f(x[3], y[3], z[3]);
 	glEnd();
 }
 
@@ -544,8 +549,8 @@ void buildPolygons()
     int j = width + 1;  // first cell second row
     GLfloat dw = 0;
     GLfloat dl = 0;
-    GLfloat distanceW = scene[0]/width; // TODO
-    GLfloat distanceL = scene[1]/legnth; // TODO
+    GLfloat distanceW = scene[0]/width;
+    GLfloat distanceL = scene[1]/legnth;
 
     GLfloat x[4] = {0,0,0,0};
     GLfloat y[4] = {0,0,0,0};
@@ -701,7 +706,7 @@ void mydisplay(void)
               house[3],house[4],house[5]);
     drawSun();
     buildPolygons();
-    resetlight();
+    /*resetlight();*/
 
     glutSwapBuffers();
 }
@@ -726,7 +731,6 @@ int main(int argc, char**argv)
 
     // Callback functions
 	glutDisplayFunc(mydisplay);
-//	glutIdleFunc(resetlight);
 	glutIdleFunc(rotateSun);
     glutSpecialFunc(specialKeys);
 
