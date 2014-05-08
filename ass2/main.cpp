@@ -13,15 +13,22 @@
     #include <GL/glut.h>
 #endif
 
-#define max_hight 5.5
 using namespace std;
+
+vector<int> map;
+vector<GLfloat> scene;
+vector<GLfloat> material;
+vector<GLfloat> house;
+vector<GLfloat> car;
+vector<GLfloat> sun;
+
+GLfloat MAX_HEIGHT;
+int width,legnth;
 
 GLfloat rotate_y = 0;
 GLfloat rotate_x = 0;
 GLfloat rotate_z = 0;
 GLfloat zoom = 1;
-GLfloat MAX_HEIGHT = 5.5;
-
 GLfloat angle = 0;
 
 void init()
@@ -31,16 +38,44 @@ void init()
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
 
-
 	gluPerspective(60, 1, 1, 100);
 	gluLookAt(0,0, 30, 0,0,0, 0, 1, 0);  //define view direction
+
+    MAX_HEIGHT = scene.at(2);
 
 	/* return to modelview mode */
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
-void specialKeys(int key,int x,int y) {
+void printInitVectors(void)
+{
+    int i = 0;
+        cout << " - SCENE - " << endl;
+    for(  ; i < (scene).size(); i++) {
+        cout << (scene).at(i) << "< " << endl;
+    }
+        cout << " - MATERIAL- " << endl;
+    for(i=0  ; i < (material).size(); i++) {
+        cout << (material).at(i) << "< " << endl;
+    }
+        cout << " - HOUSE - " << endl;
+    for(i=0  ; i < (house).size(); i++) {
+        cout << (house).at(i) << "< " << endl;
+    }
+        cout << " - CAR - " << endl;
+    for(i=0  ; i < (car).size(); i++) {
+        cout << (car).at(i) << "< " << endl;
+    }
+        cout << " - SUN - " << endl;
+    for(i=0  ; i < (sun).size(); i++) {
+        cout << (sun).at(i) << "< " << endl;
+    }
+
+}
+
+void specialKeys(int key,int x,int y) 
+{
     glMatrixMode(GL_PROJECTION);
 
     switch(key) {
@@ -79,8 +114,8 @@ GLuint loadBMP_custom(const char * imagepath)
     // Data read from the header of the BMP file
     unsigned char header[54]; // Each BMP file begins by a 54-bytes header
     unsigned int dataPos;     // Position in the file where the actual data begins
-    unsigned int width, height;
-    unsigned int imageSize;   // = width*height*3
+    unsigned int widthBmp, height;
+    unsigned int imageSize;   // = widthBmp*height*3
 
     // Actual RGB data
     unsigned char * data;
@@ -102,10 +137,10 @@ GLuint loadBMP_custom(const char * imagepath)
     // Read ints from the byte array
     dataPos    = *(int*)&(header[0x0A]);
     imageSize  = *(int*)&(header[0x22]);
-    width      = *(int*)&(header[0x12]);
+    widthBmp      = *(int*)&(header[0x12]);
     height     = *(int*)&(header[0x16]);
 
-    if (imageSize==0)    imageSize=width*height*3; // 3 : one byte for each Red, Green and Blue component
+    if (imageSize==0)    imageSize=widthBmp*height*3; // 3 : one byte for each Red, Green and Blue component
     if (dataPos==0)      dataPos=54; // The BMP header is done that way
 
     // Create a buffer
@@ -125,7 +160,7 @@ GLuint loadBMP_custom(const char * imagepath)
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // Give the image to OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, widthBmp, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -137,25 +172,58 @@ void draw_axes(void)
 {
     float ORG[3] = {0,0,0};
 
-    float XP[3] = {15,0,0}, XN[3] = {-15,0,0},
-          YP[3] = {0,15,0}, YN[3] = {0,-15,0},
-          ZP[3] = {0,0,15}, ZN[3] = {0,0,-15};
+    float XP[3] = {10,0,0}, XN[3] = {-10,0,0},
+          YP[3] = {0,10,0}, YN[3] = {0,-10,0},
+          ZP[3] = {0,0,10}, ZN[3] = {0,0,-10};
 
     glLineWidth (2.0);
     glBegin (GL_LINES);
 
-    glColor3f (1,0,0); // X axis is red.
-    glVertex3fv (XN);
-    glVertex3fv (XP);
+        glColor3f (1,0,0); // X axis is red.
+        glVertex3fv (XN);
+        glVertex3fv (XP);
 
-    glColor3f (0,1,0); // Y axis is green.
-    glVertex3fv (YN);
-    glVertex3fv (YP);
+        glColor3f (0,1,0); // Y axis is green.
+        glVertex3fv (YN);
+        glVertex3fv (YP);
 
-    glColor3f (0,0,1); // Z axis is blue.
-    glVertex3fv (ZN);
-    glVertex3fv (ZP);
+        glColor3f (0,0,1); // Z axis is blue.
+        glVertex3fv (ZN);
+        glVertex3fv (ZP);
 
+    glEnd();
+}
+
+void drawPyramid(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2, GLfloat centerX, GLfloat centerY, GLfloat centerZ )
+{
+    glColor3f (   1.0,    0.0,    0.0 );
+
+    // ROOF - Right
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x2, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x2, y2, z2 );
+    glEnd();
+
+    // ROOF - Back
+    glBegin(GL_TRIANGLES);
+    glVertex3f(   x1,    y2,   z2   );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f(     x2,    y2,   z1   );
+    glEnd();
+
+    // ROOF - Left
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x1, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x1, y2, z1 );
+    glEnd();
+
+    // ROOF - Front
+    glBegin(GL_TRIANGLES);
+    glVertex3f( x1, y1, z1 );
+    glVertex3f( centerX, centerY, centerZ );
+    glVertex3f( x2, y1, z2 );
     glEnd();
 }
 
@@ -210,40 +278,8 @@ void drawCube(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloa
       glVertex3f( x1, y2, z1 );
       glVertex3f( x2, y2, z2 );
       glVertex3f( x2, y1, z2 );
+
       glEnd();
-}
-
-void drawPyramid(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2, GLfloat centerX, GLfloat centerY, GLfloat centerZ )
-{
-    glColor3f (   1.0,    0.0,    0.0 );
-
-    // ROOF - Right
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x2, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x2, y2, z2 );
-    glEnd();
-
-    // ROOF - Back
-    glBegin(GL_TRIANGLES);
-    glVertex3f(   x1,    y2,   z2   );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f(     x2,    y2,   z1   );
-    glEnd();
-
-    // ROOF - Left
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x1, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x1, y2, z1 );
-    glEnd();
-
-    // ROOF - Front
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x1, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x2, y1, z2 );
-    glEnd();
 }
 
 void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
@@ -256,7 +292,8 @@ void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLflo
     GLfloat centerY = y1 + ((y2 - (y1)) / 2);
     GLfloat centerZ = 5;
     // ROOF
-    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
+    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5,  // TODO
+                centerX, centerY, centerZ);
 
     // DOOR
     glColor3f (   0.5,    0.5,    0.5 );
@@ -372,44 +409,45 @@ void drawCarBody(void)
     drawWindShield();
 }
 
-void drawCar(void) {
-    draw_wheel(0.0f ,0.0f   ,1.0f);
-    draw_wheel(1.0f ,0.0f   ,1.0f);
+void drawCar(void) 
+{
+    draw_wheel(0.0f ,0.0f  ,1.0f);
+    draw_wheel(1.0f ,0.0f  ,1.0f);
     draw_wheel(0.0f ,5.0f  ,1.0f);
     draw_wheel(1.0f ,5.0f  ,1.0f);
-
     drawCarBody();
 }
 
 void drawSun(void)
 {
-    glPushMatrix();
-
     Vector3f a;
-    a.x = 0;
-    a.y = 0;
-    a.z = MAX_HEIGHT;
     Vector3f b;
-    b.x = 15;
-    b.y = 7;
-    b.z = 8;
     Vector3f c;
-    c = Vector3f::crossProduct(a,b);
+    
+    glPushMatrix();
+        a.x = 0;
+        a.y = 0;
+        a.z = MAX_HEIGHT;
+        b.x = sun[0];
+        b.y = sun[1];
+        b.z = sun[2];
+        c = Vector3f::crossProduct(a,b);
 
         glRotatef(angle,c.x,c.y,c.z);
-
-        glTranslatef(15,7,8);
-        glColor3f(0.5f, 0.7f , 0.0f);
+        glTranslatef(sun[0],sun[1],sun[2]);
+        glColor3f(sun[3],sun[4],sun[5]);
         glutSolidSphere(1,36,36);
     glPopMatrix();
 }
 
-void rotateSun(void) {
+void rotateSun(void) 
+{
     angle += 1.5;
     glutPostRedisplay();
 }
 
-void draw_plane(void) {
+void draw_plane(void)
+{
     glBegin(GL_LINE_LOOP);
 
         glColor3f(0,0,0);
@@ -419,25 +457,71 @@ void draw_plane(void) {
         glVertex3f(15,7,8);
 
     glEnd();
-
 }
 
-void mydisplay(void)
-{	
-    // always make sure to be on MODEL_VIEW matric here!
-    glLoadIdentity();
+void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[])
+{
+	glBegin(GL_QUADS);
 
-    //  Clear screen and Z-buffer
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glColor3f(1,0,0);
+	glVertex3f(x[0], y[0], z[0]);
 
-    draw_axes();
+	glColor3f(1,1,0);
+	glVertex3f(x[1], y[1], z[1]);
 
-    drawCar();
-    drawHouse(2.5,-2.5,7,5,-5.5,7);
-    drawSun();
-    draw_plane();
+	glColor3f(1,0,0);
+	glVertex3f(x[2], y[2], z[2]);
 
-    glutSwapBuffers();
+	glColor3f(1,0,0);
+	glVertex3f(x[3], y[3], z[3]);
+
+	glEnd();
+}
+
+void buildPolygons() 
+{
+    int i = 0;          // first cell first row
+    int j = width + 1;  // first cell second row
+    GLfloat dw = 0;
+    GLfloat dl = 0;
+    GLfloat distanceW = scene[0]/width; // TODO
+    GLfloat distanceL = scene[1]/legnth; // TODO
+
+    GLfloat x[4] = {0,0,0,0};
+    GLfloat y[4] = {0,0,0,0};
+    GLfloat z[4] = {0,0,0,0};
+
+
+    // Loop over vector, place i index first cell, j index in first cell second line.
+    for( int iter = 1 ; j <= (int)map.size()-2 ; i++ , j++, dw++, iter++)
+    {
+        // every time we end line
+        if (iter == width+1){
+            i++;
+            j++;
+            dl++;
+            dw=0;
+            iter = 1;
+        }
+
+        y[0] = (dl * distanceL -scene[0]/2.0f);
+        x[0] = (dw * distanceW -scene[0]/2.0f);
+        z[0] = ((MAX_HEIGHT*map[i])/255.0f);
+
+        y[1] = (dl * distanceL -scene[0]/2.0f);
+        x[1] = ((dw+1) * distanceW -scene[0]/2.0f);
+        z[1] = ((MAX_HEIGHT*map[i+1])/255.0f);
+        
+        y[2] = ((dl+1) * distanceL -scene[0]/2.0f);
+        x[2] = ((dw+1) * distanceW -scene[0]/2.0f);
+        z[2] = ((MAX_HEIGHT*map[j+1])/255.0f);
+        
+        y[3] = ((dl+1) * distanceL -scene[0]/2.0f);
+        x[3] = (dw * distanceW -scene[0]/2.0f);
+        z[3] = ((MAX_HEIGHT*map[j])/255.0f);
+
+        drawQuad(x,y,z);
+    }
 }
 
 void test(void)
@@ -465,8 +549,111 @@ void test(void)
     glutSwapBuffers();
 }
 
-int main(int argc, char**argv) {
+void parseMap(vector<int> *map, int* width, int* legnth)
+{
+    int i = 0;
+
+    ifstream file ( "./input/map.csv" );
+
+    while (file.good()) {
+        string s;
+
+        if (!getline(file,s)) break;
+        istringstream ss(s);
+
+        while(ss) {
+            string s;
+
+            if (!getline(ss,s,',')) break;
+
+            if (i == 0)         { *width = stoi(s);  i++; } 
+            else { if (i == 1)  { *legnth = stoi(s); i++;} 
+                else                {(map)->push_back(stoi(s));
+                }
+            }
+        }
+    }
+    file.close();
+}
+
+void parseInit(vector<GLfloat> *material, vector<GLfloat> *house, 
+        vector<GLfloat> *car, vector<GLfloat> *sun)
+{
+    int pos;
+    int iter = 0;
+
+    ifstream file ( "./input/init.txt" );
+
+    while (file.good()) {
+        string s;
+
+        if (!getline(file,s)) break;
+        istringstream ss(s);
+
+        while(ss) {
+            string s;
+
+            if (!getline(ss,s,',')) break;
+
+            if (s[0] > 'a' && s[0] < 'z')
+                iter++;
+
+            pos = s.find(" ");         // position of "live" in str
+
+            if (pos != -1)
+                s = s.substr(pos + 1);
+
+            switch(iter) {
+
+                case 1: 
+                    (scene).push_back(atof(s.c_str()));
+                    break;
+                case 2: 
+                    (material)->push_back(atof(s.c_str()));
+                    break;
+                case 3:
+                    (house)->push_back(atof(s.c_str()));
+                    break;
+                case 4:
+                    (car)->push_back(atof(s.c_str()));
+                    break;
+                case 5:
+                    (sun)->push_back(atof(s.c_str()));
+                    break;
+            }
+        }
+    }
+    file.close();
+}
+
+void mydisplay(void)
+{	
+    // always make sure to be on MODEL_VIEW matric here!
+    glLoadIdentity();
+
+    //  Clear screen and Z-buffer
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    draw_axes();
+
+    drawCar();
+    drawHouse(house[0],house[1],house[2],
+              house[3],house[4],house[5]);
+    drawSun();
+    buildPolygons();
+
+    glutSwapBuffers();
+}
+
+int main(int argc, char**argv) 
+{
     glutInit(&argc, argv);
+
+    // Parsing input files
+    parseMap(&map,&width,&legnth);
+    parseInit(&material,&house, &car, &sun);
+    printInitVectors();
+
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(900, 900);
 	glutCreateWindow("Assignment 2");
@@ -477,8 +664,7 @@ int main(int argc, char**argv) {
     init();
 
     // Callback functions
-//	glutDisplayFunc(mydisplay);
-	glutDisplayFunc(test);
+	glutDisplayFunc(mydisplay);
 	glutIdleFunc(rotateSun);
     glutSpecialFunc(specialKeys);
 
