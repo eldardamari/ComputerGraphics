@@ -34,9 +34,9 @@ GLfloat zoom = 1;
 GLfloat angle = 0;
 GLfloat light = 0;
 
-GLfloat light_ambient[] =   {0.2, 0.2, 0.2, 1.0}; 
-GLfloat light_diffuse[] =   {1.0, 1.0, 1.0, 1.0}; 
-GLfloat light_specular[] =  {1.0, 1.0, 1.0, 1.0};
+GLfloat light_ambient[4]; 
+GLfloat light_diffuse[4];
+GLfloat light_specular[4];
 GLfloat light_position[] =  {22, 0, 0, 1.0}; // TODO
 GLfloat light_direction[]=  {0,0,0};
     
@@ -51,6 +51,7 @@ void initLight(void)
     glEnable(GL_LIGHTING);
 
     // Light
+
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
@@ -82,8 +83,23 @@ void init()
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
         
-    MAX_HEIGHT = scene.at(2);
-    CAMAERA_HEIGHT = scene.at(3);
+        MAX_HEIGHT = scene.at(2);
+        CAMAERA_HEIGHT = scene.at(3);
+
+        light_ambient[0] = scene[4];
+        light_ambient[1] = scene[5];
+        light_ambient[2] = scene[6];
+        light_ambient[3] = 1.0f;
+        
+        light_diffuse[0] = sun[3];
+        light_diffuse[1] = sun[4];
+        light_diffuse[2] = sun[5];
+        light_diffuse[3] = 1.0f;
+        
+        light_specular[0] = sun[3];
+        light_specular[1] = sun[4];
+        light_specular[2] = sun[5];
+        light_specular[3] = 1.0f;
 
         gluPerspective(60, 1, 1, 100);
         gluLookAt(0,0, CAMAERA_HEIGHT, 0,0,0, 0, 1, 0);  //define view direction
@@ -377,14 +393,14 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     GLfloat bPlate[36][3];
     GLfloat GL_PI  = 3.1415926535897932384626433832795;
     int i;
-    z = 0.0f;
-    y = 0.0f;
+    z   = 0.0f;
+    y   = 0.0f;
+    Cz = Cz*MAX_HEIGHT/255.0f + 0.5;
     GLfloat rCz = Cz;
-    /*Cz = Cz*max_hight/255.0f;*/
 
     glBegin(GL_TRIANGLE_FAN);
         glColor3f(0.9,0.9,0.9);
-        Cx += 0.2;
+        Cx += 0.3;
 
         glNormal3f(Cx,Cy,Cz);
         glVertex3f(Cx,Cy,Cz);
@@ -392,7 +408,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
             z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
             y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
             glNormal3f(Cx,y,z);
-            glVertex3f(Cx, y , z);
+            glVertex3f(Cx,y,z);
             fPlate[i][0] = Cx;
             fPlate[i][1] = y;
             fPlate[i][2] = z;
@@ -405,7 +421,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
 
     glBegin(GL_TRIANGLE_FAN);
     glColor3f(0.9,0.9,0.9);
-    Cx -= 0.2;
+    Cx -= 0.3;
 
     glVertex3f(Cx,Cy,Cz);
     for (i=0,angle = 0.0f ; angle < 360 ; angle += 10.0f,i++) {
@@ -439,39 +455,56 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     glEnd();
 }
 
-void drawWindShield()
+void drawCarBody(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
 {
+    z1 = z1*MAX_HEIGHT/255 +0.5;
+    z2 = z2*MAX_HEIGHT/255 +0.5;
+
+    drawCube(x1+0.2 ,y1-1.2,z1, 
+             x2+0.2 ,y2+1 ,z1,
+             1.3);
+    drawCube(x1+0.2f,y1   ,1.3, 
+             x2+0.2 ,y2-1.3,1.3,
+             2.5);
+    
+    // back winshield
     glColor3f( 1.0,  0.0, 0.0 );
     glBegin(GL_QUADS);
-        glVertex3f( 1.0, 4.0f, 1.5f );
-        glVertex3f( 0.2f, 4.0f, 1.5f );
-        glVertex3f( 0.2f, 4.0f, 3.5f);
-        glVertex3f( 1.0f,4.0f, 3.5f );
+        glNormal3f(x2+0.2,y1,z1);
+        glVertex3f( x2+0.2, y1, z1 );
+        glNormal3f(x1+0.2,y1,z1);
+        glVertex3f( x1+0.2, y1, z1 );
+        glNormal3f(x1+0.2,y1,2.5);
+        glVertex3f( x1+0.2, y1, 2.5);
+        glNormal3f(x2+0.2,y1,2.5);
+        glVertex3f( x2+0.2, y1, 2.5 );
     glEnd();
 
+    // front winshield
     glColor3f( 1.0,  0.0, 1.0 );
     glBegin(GL_QUADS);
-        glVertex3f( 0.2f, 0.0f, 1.5f );
-        glVertex3f( 1.0f, 0.0f, 1.5f );
-        glVertex3f( 1.0f, 0.0f, 3.5f);
-        glVertex3f( 0.2f,0.0f, 3.5f );
+        glNormal3f(x2+0.2   ,y2-1.3 ,z1);
+        glVertex3f(x2+0.2   ,y2-1.3 ,z1);
+
+        glNormal3f(x2+0.2   ,y2-1.3 ,z1);
+        glVertex3f(x1+0.2   ,y2-1.3 ,z1);
+
+        glNormal3f(x2+0.2   ,y2-1.3 ,2.5);
+        glVertex3f(x1+0.2   ,y2-1.3 ,2.5);
+
+        glNormal3f(x2+0.2   ,y2-1.3 ,2.5);
+        glVertex3f(x2+0.2   ,y2-1.3 ,2.5);
     glEnd();
 }
 
-void drawCarBody(void)
+void drawCar(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
 {
-    drawCube(0.2f,-1.2f,1.0f, 1.0f, 6.2f,1.0f,2.5f);
-    drawCube(0.2f,0.0f,3.5f, 1.0f, 4.0f,3.5f,2.0f);
-    drawWindShield();
-}
+    draw_wheel(x1   ,y1     ,z1);
+    draw_wheel(x1   ,y2     ,z1);
+    draw_wheel(x2   ,y1     ,z1);
+    draw_wheel(x2   ,y2     ,z2);
 
-void drawCar(void) 
-{
-    draw_wheel(0.0f ,0.0f  ,1.0f);
-    draw_wheel(1.0f ,0.0f  ,1.0f);
-    draw_wheel(0.0f ,5.0f  ,1.0f);
-    draw_wheel(1.0f ,5.0f  ,1.0f);
-    drawCarBody();
+    drawCarBody(x1,y1,z1,x2,y2,z2);
 }
 
 void draw_plane(void)
@@ -806,7 +839,7 @@ void mydisplay(void)
 
     draw_axes();
 
-    drawCar();
+    drawCar(car[0],car[1],car[2],car[3],car[4],car[5]);
     drawHouse(house[0],house[1],house[2],
               house[3],house[4],house[5]);
     drawSun();
