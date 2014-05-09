@@ -689,13 +689,13 @@ void buildPolygons()
             GLfloat range;
 
             if(map[i] > 200) {
-                t1 = ( (200-z[0]) / (z[3]-z[0]) );
-                t2 = ( (200-z[1]) / (z[2]-z[1]) );
-                range = 200;
+                range = 200*MAX_HEIGHT/255.0f;
+                t1 = ( (range-z[0]) / (z[3]-z[0]) );
+                t2 = ( (range-z[0]) / (z[2]-z[1]) );
             } else {
-                t1 = ( (100-z[0]) / (z[3]-z[0]) );
-                t2 = ( (100-z[1]) / (z[2]-z[1]) );
-                range = 100;
+                range = 100*MAX_HEIGHT/255.0f;
+                t1 = ( (range-z[0]) / (z[3]-z[0]) );
+                t2 = ( (range-z[0]) / (z[2]-z[1]) );
             }
 
             newX[0] = x[0];
@@ -708,11 +708,11 @@ void buildPolygons()
 
             newX[2] = x[1] + t2*(x[2]-x[1]);
             newY[2] = y[1] + t2*(y[2]-y[1]);
-            newZ[2] = (MAX_HEIGHT*range) / 255.0f;
+            newZ[2] = range;
 
             newX[3] = x[0] + t1*(x[3]-x[0]);
             newY[3] = y[0] + t1*(y[3]-y[0]);
-            newZ[3] = (MAX_HEIGHT*range) / 255.0f;
+            newZ[3] = range;
 
             textureId = chooseTexturesFromMap(newX,newY,newZ);
             drawQuad(newX,newY,newZ,tX,tY,textureId);
