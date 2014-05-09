@@ -568,11 +568,11 @@ public:
 
 
 	static inline Vector3f projectPointOntoPlane (Vector3f &point, Vector3f &anchor, Vector3f &normal) 
-    {
-
-        Vector3f temp = point - anchor;
-        return point - projectOntoVector (temp, normal);
-    }
+        {
+                        
+		Vector3f temp = point - anchor;
+		return point - projectOntoVector (temp, normal);
+	}
 
 
 public:

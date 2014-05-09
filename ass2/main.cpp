@@ -30,7 +30,9 @@ int width,legnth;
 GLfloat rotate_y = 0;
 GLfloat rotate_x = 0;
 GLfloat rotate_z = 0;
+
 GLfloat zoom = 1;
+
 GLfloat angle = 0;
 GLfloat light = 0;
 
@@ -39,11 +41,14 @@ GLfloat light_diffuse[4];
 GLfloat light_specular[4];
 GLfloat light_position[] =  {22, 0, 0, 1.0}; // TODO
 GLfloat light_direction[]=  {0,0,0};
-    
+
 Vector3f a;
 Vector3f b;
 Vector3f c;
 Vector3f d;
+
+    
+GLfloat textures[20];
 
 void initLight(void)
 {
@@ -51,13 +56,12 @@ void initLight(void)
     glEnable(GL_LIGHTING);
 
     // Light
-
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction); 
+
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45);
 
     glEnable(GL_LIGHT0);
@@ -104,7 +108,7 @@ void init()
         gluPerspective(60, 1, 1, 100);
         gluLookAt(0,0, CAMAERA_HEIGHT, 0,0,0, 0, 1, 0);  //define view direction
 
-        initLight();
+        /*initLight();*/
 
 	/* return to modelview mode */
 	glMatrixMode(GL_MODELVIEW);
@@ -134,10 +138,9 @@ void printInitVectors(void)
     for(i=0  ; i < (sun).size(); i++) {
         cout << (sun).at(i) << "< " << endl;
     }
-
 }
 
-void specialKeys(int key,int x,int y) 
+void specialKeys(int key,int x,int y)
 {
     glMatrixMode(GL_PROJECTION);
 
@@ -185,7 +188,10 @@ GLuint loadBMP_custom(const char * imagepath)
 
     // Open the file
     FILE * file = fopen(imagepath,"rb");
-    if (!file) { printf("Image could not be opened\n"); return 0; }
+    if (!file) { 
+        printf("Image could not be opened\n"); 
+        cout << imagepath << endl;
+        return 0; }
 
     if ( fread(header, 1, 54, file)!=54 ){ // If not 54 bytes read : problem
         printf("Not a correct BMP file\n");
@@ -228,7 +234,22 @@ GLuint loadBMP_custom(const char * imagepath)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+    free(data);
+
     return textureID;
+}
+
+void loadTextures()
+{
+    textures[0] = loadBMP_custom("./textures/brick.bmp");
+    textures[1] = loadBMP_custom("./textures/roof.bmp");
+    textures[2] = loadBMP_custom("./textures/car.bmp");
+    textures[3] = loadBMP_custom("./textures/wheel.bmp");
+    textures[4] = loadBMP_custom("./textures/grass.bmp");
+    textures[5] = loadBMP_custom("./textures/snow.bmp");
+    textures[6] = loadBMP_custom("./textures/water.bmp");
+    textures[7] = loadBMP_custom("./textures/asphalt.bmp");
+    textures[8] = loadBMP_custom("./textures/rock.bmp");
 }
 
 void draw_axes(void)
@@ -242,121 +263,166 @@ void draw_axes(void)
     glLineWidth (2.0);
     glBegin (GL_LINES);
 
-        glColor3f (1,0,0); // X axis is red.
-        glVertex3fv (XN);
-        glVertex3fv (XP);
+    glColor3f (1,0,0); // X axis is red.
+    glVertex3fv (XN);
+    glVertex3fv (XP);
 
-        glColor3f (0,1,0); // Y axis is green.
-        glVertex3fv (YN);
-        glVertex3fv (YP);
+    glColor3f (0,1,0); // Y axis is green.
+    glVertex3fv (YN);
+    glVertex3fv (YP);
 
-        glColor3f (0,0,1); // Z axis is blue.
-        glVertex3fv (ZN);
-        glVertex3fv (ZP);
+    glColor3f (0,0,1); // Z axis is blue.
+    glVertex3fv (ZN);
+    glVertex3fv (ZP);
 
-    glEnd();
-}
-
-void drawPyramid(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2, GLfloat centerX, GLfloat centerY, GLfloat centerZ )
-{
-    glColor3f (   1.0,    0.0,    0.0 );
-
-    // ROOF - Right
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x2, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x2, y2, z2 );
-    glEnd();
-
-    // ROOF - Back
-    glBegin(GL_TRIANGLES);
-    glVertex3f(   x1,    y2,   z2   );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f(     x2,    y2,   z1   );
-    glEnd();
-
-    // ROOF - Left
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x1, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x1, y2, z1 );
-    glEnd();
-
-    // ROOF - Front
-    glBegin(GL_TRIANGLES);
-    glVertex3f( x1, y1, z1 );
-    glVertex3f( centerX, centerY, centerZ );
-    glVertex3f( x2, y1, z2 );
     glEnd();
 }
 
 void drawCube(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2, GLfloat h)
 {
-      glColor3f( 0.0,  0.0, 0.0 );
+      glColor3f( 1.0,  1.0, 1.0 );
 
       //side - FRONT
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x1, y1, z1 );      // P1 is red
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x1, y1, h  );      // P2 is green
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x2, y1, h  );      // P3 is blue
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x2, y1, z1 );      // P4 is purple
 
       glEnd();
 
       //side - BACK
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x1, y2, z2 );
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x1, y2, h );
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x2, y2, h );
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x2, y2, z2 );
       glEnd();
 
       //side - RIGHT
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x2, y1, z1 );
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x2, y1, h );
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x2, y2, h );
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x2, y2, z2 );
       glEnd();
 
       //side - LEFT
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x1, y1, z1 );
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x1, y1, h );
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x1, y2, h );
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x1, y2, z2 );
       glEnd();
 
       //side - TOP
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x1, y1, h );
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x1, y2, h );
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x2, y2, h );
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x2, y1, h );
       glEnd();
 
       //side - BOTTOM
       glBegin(GL_QUADS);
+      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
       glVertex3f( x1, y1, z1 );
+      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
       glVertex3f( x1, y2, z1 );
+      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
       glVertex3f( x2, y2, z2 );
+      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
       glVertex3f( x2, y1, z2 );
-
       glEnd();
 }
 
-void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
+void drawPyramid(GLfloat x1, GLfloat y1, GLfloat z1, 
+                 GLfloat x2, GLfloat y2, GLfloat z2, 
+                 GLfloat centerX, GLfloat centerY, GLfloat centerZ )
+{
+    glColor3f (   1.0,    0.0,    0.0 );
+
+    // ROOF - Right
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+    glVertex3f( x2, y1, z1 );
+    glTexCoord2f (0.5f, 1.0f); /* upper point corner of image */
+    glVertex3f( centerX, centerY, centerZ );
+    glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+    glVertex3f( x2, y2, z2 );
+    glEnd();
+
+    // ROOF - Back
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+    glVertex3f(   x1,    y2,   z2   );
+    glTexCoord2f (0.5f, 1.0f); /* upper point corner of image */
+    glVertex3f( centerX, centerY, centerZ );
+    glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+    glVertex3f(     x2,    y2,   z1   );
+    glEnd();
+
+    // ROOF - Left
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+    glVertex3f( x1, y1, z1 );
+    glTexCoord2f (0.5f, 1.0f); /* upper point corner of image */
+    glVertex3f( centerX, centerY, centerZ );
+    glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+    glVertex3f( x1, y2, z1 );
+    glEnd();
+
+    // ROOF - Front
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+    glVertex3f( x1, y1, z1 );
+    glTexCoord2f (0.5f, 1.0f); /* upper point corner of image */
+    glVertex3f( centerX, centerY, centerZ );
+    glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+    glVertex3f( x2, y1, z2 );
+    glEnd();
+}
+
+void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1, 
+               GLfloat x2, GLfloat y2, GLfloat z2)
 {
     GLfloat normalizedZ1 = (z1 * MAX_HEIGHT)/255;
     GLfloat normalizedZ2 = (z2 * MAX_HEIGHT)/255;
+
+    glBindTexture (GL_TEXTURE_2D, textures[0]);
+    glEnable (GL_TEXTURE_2D);
     drawCube(x1, y1, normalizedZ1, x2, y2, normalizedZ2, 3.5);
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     GLfloat centerX = x1 + ((x2 - (x1)) / 2);
     GLfloat centerY = y1 + ((y2 - (y1)) / 2);
     GLfloat centerZ = 5;
+
     // ROOF
-    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5,  // TODO
-                centerX, centerY, centerZ);
+    glBindTexture (GL_TEXTURE_2D, textures[1]);
+    glEnable (GL_TEXTURE_2D);
+    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     // DOOR
     glColor3f (   0.5,    0.5,    0.5 );
@@ -455,7 +521,8 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     glEnd();
 }
 
-void drawCarBody(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
+void drawCarBody(GLfloat x1, GLfloat y1, GLfloat z1, 
+                 GLfloat x2, GLfloat y2, GLfloat z2)
 {
     z1 = z1*MAX_HEIGHT/255 +0.5;
     z2 = z2*MAX_HEIGHT/255 +0.5;
@@ -499,10 +566,13 @@ void drawCarBody(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLf
 
 void drawCar(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
 {
-    draw_wheel(x1   ,y1     ,z1);
-    draw_wheel(x1   ,y2     ,z1);
-    draw_wheel(x2   ,y1     ,z1);
-    draw_wheel(x2   ,y2     ,z2);
+    glBindTexture (GL_TEXTURE_2D, textures[2]);
+    glEnable (GL_TEXTURE_2D);
+        draw_wheel(x1   ,y1     ,z1);
+        draw_wheel(x1   ,y2     ,z1);
+        draw_wheel(x2   ,y1     ,z1);
+        draw_wheel(x2   ,y2     ,z2);
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     drawCarBody(x1,y1,z1,x2,y2,z2);
 }
@@ -546,7 +616,7 @@ void drawSun(void)
         light_position[1] = sun[1];
         light_position[2] = sun[2];
 
-        initLight();
+        /*initLight();*/
 
     glPopMatrix();
 }
@@ -605,31 +675,35 @@ int normalVectorsTest(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
     return false;
 }
 
-void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
+void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[],
+              GLfloat tX[], GLfloat tY[], GLfloat textureId)
 {
 
     bool result = normalVectorsTest(x,y,z,realZ);
     Vector3f planeAC = Vector3f::crossProduct(a,c);
     Vector3f planeBD = Vector3f::crossProduct(b,d);
 
+    glColor3f( 1.0,  1.0, 1.0 );
+    glBindTexture (GL_TEXTURE_2D, textureId);
+    glEnable (GL_TEXTURE_2D);
 	glBegin(GL_QUADS);
 
     switch(result) {
         case true:
             glNormal3f(x[0],y[0],z[0]);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[0],tY[0]); /* upper left corner of image */
             glVertex3f(x[0], y[0], z[0]);
 
             glNormal3f(x[1],y[1],z[1]);
-            glColor3f(1,1,0);
+            glTexCoord2f (tX[2],tY[1]); /* upper right corner of image */
             glVertex3f(x[1], y[1], z[1]);
 
             glNormal3f(x[2],y[2],z[2]);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[2],tY[2]); /* lower right corner of image */
             glVertex3f(x[2], y[2], z[2]);
 
             glNormal3f(x[3],y[3],z[3]);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[3],tY[3]); /* lower left corner of image */
             glVertex3f(x[3], y[3], z[3]);
             break;
         
@@ -653,27 +727,61 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
                                           (vectorFourFirst,vectorFourThird);
             
             
-            glNormal3f(crossProductForTwo.x + crossProductForFour.x,crossProductForTwo.y + crossProductForFour.y,
+            glNormal3f(crossProductForTwo.x + crossProductForFour.x,
+                       crossProductForTwo.y + crossProductForFour.y,
                        crossProductForTwo.z + crossProductForFour.z);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[0],tY[0]); /* upper left corner of image */
             glVertex3f(x[0], y[0], z[0]);
 
             glNormal3f(crossProductForTwo.x,crossProductForTwo.y,crossProductForTwo.z);
-            glColor3f(1,1,0);
+            glTexCoord2f (tX[2],tY[1]); /* upper right corner of image */
             glVertex3f(x[1], y[1], z[1]);
 
-            glNormal3f(crossProductForTwo.x + crossProductForFour.x,crossProductForTwo.y + crossProductForFour.y,
+            glNormal3f(crossProductForTwo.x + crossProductForFour.x,
+                       crossProductForTwo.y + crossProductForFour.y,
                        crossProductForTwo.z + crossProductForFour.z);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[2],tY[2]); /* lower right corner of image */
             glVertex3f(x[2], y[2], z[2]);
 
             glNormal3f(crossProductForFour.x,crossProductForFour.y,crossProductForFour.z);
-            glColor3f(1,0,0);
+            glTexCoord2f (tX[3],tY[3]); /* lower left corner of image */
             glVertex3f(x[3], y[3], z[3]);
-
             break;
     }
 	glEnd();
+
+	glDisable (GL_TEXTURE_2D); /* disable texture mapping */
+}
+
+GLfloat chooseTexturesFromMap(GLfloat x[],GLfloat y[],GLfloat z[])
+{
+    if (z[0] == z[1] && z[2] == z[0] && z[3] == z[0]) {
+
+        if (fmod(255.0f*z[0]/MAX_HEIGHT, 2.0) == 0)
+            return textures[6]; //water
+        else
+            return textures[7]; //asphalt
+
+    } else {
+        GLfloat range;
+        if( z[0] == z[1] )
+        {
+            range = 255.0f * z[0]/MAX_HEIGHT;
+        } else {
+            if( z[0] == z[2])
+                range = 255.0f * z[0]/MAX_HEIGHT;
+            else
+                range = 255.0f * z[1]/MAX_HEIGHT;
+        }
+
+        if (range < 100) {
+            return textures[4]; // grass
+        } else if (range <= 200 && range >= 100) {
+            return textures[8]; // rocks
+        } else if (range > 200) {
+            return textures[5]; // snow
+        }
+    }
 }
 
 void buildPolygons() 
@@ -689,7 +797,8 @@ void buildPolygons()
     GLfloat y[4] = {0,0,0,0};
     GLfloat z[4] = {0,0,0,0};
     GLfloat realZ[4] = {0,0,0,0};
-
+    GLfloat tX[4] = {0,1,1,0};
+    GLfloat tY[4] = {1,1,0,0};
 
     // Loop over vector, place i index first cell, j index in first cell second line.
     for( int iter = 1 ; j <= (int)map.size()-2 ; i++ , j++, dw++, iter++)
@@ -722,34 +831,72 @@ void buildPolygons()
         x[3] = (dw * distanceW -scene[0]/2.0f);
         z[3] = ((MAX_HEIGHT*map[j])/255.0f);
         realZ[3] = map[j];
+            
+        GLfloat textureId = chooseTexturesFromMap(x,y,realZ);
+        drawQuad(x,y,z,tX,tY,realZ,textureId);
+        continue;
 
-        drawQuad(x,y,z,realZ);
+        if(z[0]==z[1] && z[0]!=z[2] && z[0]!=z[3]) {
+            double t1, t2;
+            GLfloat newX[4];
+            GLfloat newY[4];
+            GLfloat newZ[4];
+            GLfloat textureId;
+            GLfloat range;
+
+            if(map[i] > 200) {
+                range = 200*MAX_HEIGHT/255.0f;
+                t1 = ( (range-z[0]) / (z[3]-z[0]) );
+                t2 = ( (range-z[0]) / (z[2]-z[1]) );
+            } else {
+                range = 100*MAX_HEIGHT/255.0f;
+                t1 = ( (range-z[0]) / (z[3]-z[0]) );
+                t2 = ( (range-z[0]) / (z[2]-z[1]) );
+            }
+
+            newX[0] = x[0];
+            newY[0] = y[0];
+            newZ[0] = z[0];
+
+            newX[1] = x[1];
+            newY[1] = y[1];
+            newZ[1] = z[1];
+
+            newX[2] = x[1] + t2*(x[2]-x[1]);
+            newY[2] = y[1] + t2*(y[2]-y[1]);
+            newZ[2] = range;
+
+            newX[3] = x[0] + t1*(x[3]-x[0]);
+            newY[3] = y[0] + t1*(y[3]-y[0]);
+            newZ[3] = range;
+
+            textureId = chooseTexturesFromMap(newX,newY,newZ);
+            drawQuad(newX,newY,newZ,realZ,tX,tY,textureId);
+
+            newX[0] = newX[3];
+            newY[0] = newY[3];
+            newZ[0] = newZ[3];
+
+            newX[1] = newX[2];
+            newY[1] = newY[2];
+            newZ[1] = newZ[2];
+
+            newX[2] = x[2];
+            newY[2] = y[2];
+            newZ[2] = z[2];
+
+            newX[3] = x[3];
+            newY[3] = y[3];
+            newZ[3] = z[3];
+
+            textureId = chooseTexturesFromMap(newX,newY,newZ);
+            drawQuad(newX,newY,newZ,realZ,tX,tY,textureId);
+
+        } else {
+            GLfloat textureId = chooseTexturesFromMap(x,y,z);
+            drawQuad(x,y,z,tX,tY,realZ,textureId);
+        }
     }
-}
-
-void test(void)
-{
-    glLoadIdentity ();
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
-    GLuint texture = loadBMP_custom("brick.bmp");
-    glBindTexture (GL_TEXTURE_2D, texture);
-
-    glEnable (GL_TEXTURE_2D);
-    glBegin (GL_QUADS);
-        glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-        glVertex3f (-2.0f, -2.0f, 0.0f);
-        glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-        glVertex3f (2.0f, -2.0f, 0.0f);
-        glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-        glVertex3f (2.0f, 2.0f, 0.0f);
-        glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-        glVertex3f (-2.0f, 2.0f, 0.0f);
-    glEnd ();
-
-//    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
-
-    glutSwapBuffers();
 }
 
 void parseMap(vector<int> *map, int* width, int* legnth)
@@ -768,11 +915,17 @@ void parseMap(vector<int> *map, int* width, int* legnth)
             string s;
 
             if (!getline(ss,s,',')) break;
+            istringstream is(s);
 
+/*<<<<<<< HEAD
             if (i == 0)         { *width = stoi(s);  i++; } 
             else { if (i == 1)  { *legnth = stoi(s); i++;} 
                 else            {(map)->push_back(stoi(s));
                 }
+=======*/
+            if (i == 0)         { is >> *width;  i++; }
+            else { if (i == 1)  { is >>  *legnth; i++; }
+                   else         { int num; is >> num; (map)->push_back(num); }
             }
         }
     }
@@ -829,6 +982,31 @@ void parseInit(vector<GLfloat> *material, vector<GLfloat> *house,
     file.close();
 }
 
+void test(void)
+{
+    glLoadIdentity ();
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    GLuint texture = loadBMP_custom("brick.bmp");
+    glBindTexture (GL_TEXTURE_2D, texture);
+
+    glEnable (GL_TEXTURE_2D);
+    glBegin (GL_QUADS);
+        glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+        glVertex3f (-2.0f, -2.0f, 0.0f);
+        glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+        glVertex3f (2.0f, -2.0f, 0.0f);
+        glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+        glVertex3f (2.0f, 2.0f, 0.0f);
+        glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+        glVertex3f (-2.0f, 2.0f, 0.0f);
+    glEnd ();
+
+//    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
+
+    glutSwapBuffers();
+}
+
 void mydisplay(void)
 {	
     // always make sure to be on MODEL_VIEW matric here!
@@ -841,16 +1019,14 @@ void mydisplay(void)
 
     drawCar(car[0],car[1],car[2],car[3],car[4],car[5]);
     drawHouse(house[0],house[1],house[2],
-              house[3],house[4],house[5]);
+             house[3],house[4],house[5]);
     drawSun();
     buildPolygons();
-    /*resetlight();*/
 
     glutSwapBuffers();
 }
 
-int main(int argc, char**argv) 
-{
+int main(int argc, char**argv) {
     glutInit(&argc, argv);
 
     // Parsing input files
@@ -865,6 +1041,7 @@ int main(int argc, char**argv)
 	glEnable(GL_DEPTH_TEST);
     
     init();
+    loadTextures();
 
     // Callback functions
 	glutDisplayFunc(mydisplay);
