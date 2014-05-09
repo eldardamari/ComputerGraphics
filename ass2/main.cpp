@@ -573,10 +573,10 @@ void rotateSun(void)
 }
 
 void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],
-              GLfloat tX[], GLfloat tY[], GLfloat textureId[])
+              GLfloat tX[], GLfloat tY[], GLfloat textureId)
 {
     glColor3f( 1.0,  1.0, 1.0 );
-    glBindTexture (GL_TEXTURE_2D, textureId[0]);
+    glBindTexture (GL_TEXTURE_2D, textureId);
     glEnable (GL_TEXTURE_2D);
 
 	glBegin(GL_QUADS);
@@ -606,23 +606,34 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],
 	glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 }
 
-void chooseTexturesFromMap(GLfloat x[],GLfloat y[],GLfloat z[], GLfloat textureIds[])
+GLfloat chooseTexturesFromMap(GLfloat x[],GLfloat y[],GLfloat z[])
 {
     if (z[0] == z[1] && z[2] == z[0] && z[3] == z[0]) {
 
         if (fmod(255.0f*z[0]/MAX_HEIGHT, 2.0) == 0)
-            textureIds[0] = textures[6];
+            return textures[6]; //water
         else
-            textureIds[0] = textures[7];
+            return textures[7]; //asphalt
 
     } else {
-        GLfloat range = 255.0f*z[0]/MAX_HEIGHT;
-            if (range < 100)
-                textureIds[0] = textures[4];
-            else if (range <= 200 && range >= 100)
-                textureIds[0] = textures[8];
-            else if (range > 200)
-                textureIds[0] = textures[5];
+        GLfloat range;
+        if( z[0] == z[1] )
+        {
+            range = 255.0f * z[0]/MAX_HEIGHT;
+        } else {
+            if( z[0] == z[2])
+                range = 255.0f * z[0]/MAX_HEIGHT;
+            else
+                range = 255.0f * z[1]/MAX_HEIGHT;
+        }
+
+        if (range < 100) {
+            return textures[4]; // grass
+        } else if (range <= 200 && range >= 100) {
+            return textures[8]; // rocks
+        } else if (range > 200) {
+            return textures[5]; // snow
+        }
     }
 }
 
@@ -669,10 +680,66 @@ void buildPolygons()
         x[3] = (dw * distanceW -scene[0]/2.0f);
         z[3] = ((MAX_HEIGHT*map[j])/255.0f);
 
-        GLfloat textureIds[4] = {-1,-1,-1,-1};
-        chooseTexturesFromMap(x,y,z,textureIds);
+        if(z[0]==z[1] && z[0]!=z[2] && z[0]!=z[3]) {
+            double t1, t2;
+            GLfloat newX[4];
+            GLfloat newY[4];
+            GLfloat newZ[4];
+            GLfloat textureId;
+            GLfloat range;
 
-        drawQuad(x,y,z,tX,tY,textureIds);
+            if(map[i] > 200) {
+                t1 = ( (200-z[0]) / (z[3]-z[0]) );
+                t2 = ( (200-z[1]) / (z[2]-z[1]) );
+                range = 200;
+            } else {
+                t1 = ( (100-z[0]) / (z[3]-z[0]) );
+                t2 = ( (100-z[1]) / (z[2]-z[1]) );
+                range = 100;
+            }
+
+            newX[0] = x[0];
+            newY[0] = y[0];
+            newZ[0] = z[0];
+
+            newX[1] = x[1];
+            newY[1] = y[1];
+            newZ[1] = z[1];
+
+            newX[2] = x[1] + t2*(x[2]-x[1]);
+            newY[2] = y[1] + t2*(y[2]-y[1]);
+            newZ[2] = (MAX_HEIGHT*range) / 255.0f;
+
+            newX[3] = x[0] + t1*(x[3]-x[0]);
+            newY[3] = y[0] + t1*(y[3]-y[0]);
+            newZ[3] = (MAX_HEIGHT*range) / 255.0f;
+
+            textureId = chooseTexturesFromMap(newX,newY,newZ);
+            drawQuad(newX,newY,newZ,tX,tY,textureId);
+
+            newX[0] = newX[3];
+            newY[0] = newY[3];
+            newZ[0] = newZ[3];
+
+            newX[1] = newX[2];
+            newY[1] = newY[2];
+            newZ[1] = newZ[2];
+
+            newX[2] = x[2];
+            newY[2] = y[2];
+            newZ[2] = z[2];
+
+            newX[3] = x[3];
+            newY[3] = y[3];
+            newZ[3] = z[3];
+
+            textureId = chooseTexturesFromMap(newX,newY,newZ);
+            drawQuad(newX,newY,newZ,tX,tY,textureId);
+
+        } else {
+            GLfloat textureId = chooseTexturesFromMap(x,y,z);
+            drawQuad(x,y,z,tX,tY,textureId);
+        }
     }
 }
 
