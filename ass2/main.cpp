@@ -83,7 +83,7 @@ void init()
 	gluLookAt(0,0, 30, 0,0,0, 0, 1, 0);  //define view direction
 
     MAX_HEIGHT = scene.at(2);
-    initLight();
+//    initLight();
 
 	/* return to modelview mode */
 	glMatrixMode(GL_MODELVIEW);
@@ -221,6 +221,7 @@ void loadTextures()
     textures[5] = loadBMP_custom("./textures/snow.bmp");
     textures[6] = loadBMP_custom("./textures/water.bmp");
     textures[7] = loadBMP_custom("./textures/asphalt.bmp");
+    textures[8] = loadBMP_custom("./textures/rock.bmp");
 }
 
 void draw_axes(void)
@@ -553,14 +554,14 @@ void drawSun(void)
         glColor3f(sun[3],sun[4],sun[5]);
         glutSolidSphere(1,36,36);
 
-        light_direction[0] = -sun[0];
-        light_direction[1] = -sun[1];
-        light_direction[2] = -sun[2];
-        light_position[0] = sun[0];
-        light_position[1] = sun[1];
-        light_position[2] = sun[2];
-
-        initLight();
+//        light_direction[0] = -sun[0];
+//        light_direction[1] = -sun[1];
+//        light_direction[2] = -sun[2];
+//        light_position[0] = sun[0];
+//        light_position[1] = sun[1];
+//        light_position[2] = sun[2];
+//
+//        initLight();
 
     glPopMatrix();
 }
@@ -572,8 +573,12 @@ void rotateSun(void)
 }
 
 void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],
-              GLfloat tX[], GLfloat tY[], int textureID )
+              GLfloat tX[], GLfloat tY[], GLfloat textureId[])
 {
+    glColor3f( 1.0,  1.0, 1.0 );
+    glBindTexture (GL_TEXTURE_2D, textureId[0]);
+    glEnable (GL_TEXTURE_2D);
+
 	glBegin(GL_QUADS);
 
 //	glColor3f(1,0,0);
@@ -597,6 +602,28 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],
 	glVertex3f(x[3], y[3], z[3]);
 
 	glEnd();
+
+	glDisable (GL_TEXTURE_2D); /* disable texture mapping */
+}
+
+void chooseTexturesFromMap(GLfloat x[],GLfloat y[],GLfloat z[], GLfloat textureIds[])
+{
+    if (z[0] == z[1] && z[2] == z[0] && z[3] == z[0]) {
+
+        if (fmod(255.0f*z[0]/MAX_HEIGHT, 2.0) == 0)
+            textureIds[0] = textures[6];
+        else
+            textureIds[0] = textures[7];
+
+    } else {
+        GLfloat range = 255.0f*z[0]/MAX_HEIGHT;
+            if (range < 100)
+                textureIds[0] = textures[4];
+            else if (range <= 200 && range >= 100)
+                textureIds[0] = textures[8];
+            else if (range > 200)
+                textureIds[0] = textures[5];
+    }
 }
 
 void buildPolygons() 
@@ -642,12 +669,10 @@ void buildPolygons()
         x[3] = (dw * distanceW -scene[0]/2.0f);
         z[3] = ((MAX_HEIGHT*map[j])/255.0f);
 
+        GLfloat textureIds[4] = {-1,-1,-1,-1};
+        chooseTexturesFromMap(x,y,z,textureIds);
 
-
-        glBindTexture (GL_TEXTURE_2D, textures[4]);
-        glEnable (GL_TEXTURE_2D);
-        drawQuad(x,y,z,tX,tY,textures[4]);
-        glDisable (GL_TEXTURE_2D); /* disable texture mapping */
+        drawQuad(x,y,z,tX,tY,textureIds);
     }
 }
 
