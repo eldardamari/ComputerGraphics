@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 #include <stdlib.h>
+
 #include "./Vector3f.h"
 
 #ifdef __APPLE__
@@ -23,6 +24,7 @@ vector<GLfloat> car;
 vector<GLfloat> sun;
 
 GLfloat MAX_HEIGHT;
+GLfloat CAMAERA_HEIGHT;
 int width,legnth;
 
 GLfloat rotate_y = 0;
@@ -35,8 +37,13 @@ GLfloat light = 0;
 GLfloat light_ambient[] =   {0.2, 0.2, 0.2, 1.0}; 
 GLfloat light_diffuse[] =   {1.0, 1.0, 1.0, 1.0}; 
 GLfloat light_specular[] =  {1.0, 1.0, 1.0, 1.0};
-GLfloat light_position[] =  {22, 0, 0, 1.0};
+GLfloat light_position[] =  {22, 0, 0, 1.0}; // TODO
 GLfloat light_direction[]=  {0,0,0};
+    
+Vector3f a;
+Vector3f b;
+Vector3f c;
+Vector3f d;
 
 void initLight(void)
 {
@@ -64,7 +71,6 @@ void initLight(void)
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_s); 
     glMaterialfv(GL_FRONT, GL_SHININESS,low_sh);
 
-
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_NORMALIZE); // maintain normal vectors size
 }
@@ -75,11 +81,13 @@ void init()
 
 	glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
+        
+    MAX_HEIGHT = scene.at(2);
+    CAMAERA_HEIGHT = scene.at(3);
 
         gluPerspective(60, 1, 1, 100);
-        gluLookAt(0,0, 30, 0,0,0, 0, 1, 0);  //define view direction
+        gluLookAt(0,0, CAMAERA_HEIGHT, 0,0,0, 0, 1, 0);  //define view direction
 
-        MAX_HEIGHT = scene.at(2);
         initLight();
 
 	/* return to modelview mode */
@@ -505,7 +513,6 @@ void drawSun(void)
         light_position[1] = sun[1];
         light_position[2] = sun[2];
 
-        draw_plane();
         initLight();
 
     glPopMatrix();
@@ -521,25 +528,118 @@ void resetlight(void)
 {
     initLight();
 }
-
-void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[])
+int normalVectorsTest(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
 {
+    Vector3f vectorAD,vectorAC,vectorBA,vectorBC;
+    Vector3f crossProductP1,crossProductP2;
+
+    a = Vector3f(x[0],y[0],realZ[0]);
+    b = Vector3f(x[1],y[1],realZ[1]);
+    c = Vector3f(x[2],y[2],realZ[2]);
+    d = Vector3f(x[3],y[3],realZ[3]);
+
+    a.normalize();
+    b.normalize();
+    c.normalize();
+    d.normalize();
+    /*cout << "a.x = " << a.x << " ";
+    cout << "a.y = " << a.y << " ";
+    cout << "a.z = " << a.z << " " << endl;*/
+
+    vectorAD.fromTo(a,d); // create vectors from a to d
+    vectorAC.fromTo(a,c);// create vectores from a to c
+    vectorBA.fromTo(b,a); // create vectors from b to a
+    vectorBC.fromTo(b,c);// create vectores from b to c*/
+
+    crossProductP1 = Vector3f::crossProduct(vectorAD,vectorAC);
+    crossProductP2 = Vector3f::crossProduct(vectorBA,vectorBC);
+    
+    /*cout << "crossProductP1.x = " << crossProductP1.x << " " << endl;
+    cout << "crossProductP2.x = " << crossProductP2.x << " " << endl;
+    cout << "crossProductP1.y = " << crossProductP1.y << " " << endl;
+    cout << "crossProductP2.y = " << crossProductP2.y << " " << endl;
+    cout << "crossProductP1.z = " << crossProductP1.z << " " << endl;
+    cout << "crossProductP2.z = " << crossProductP2.z << " " << endl;
+    cout << " _________________________________________________" << endl;*/
+
+    /*cout << crossProductP1 << endl;*/
+
+    if (crossProductP1.x == crossProductP2.x &&
+        crossProductP1.y == crossProductP2.y &&
+        crossProductP1.z == crossProductP2.z) 
+        return true;
+
+    return false;
+}
+
+void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
+{
+
+    bool result = normalVectorsTest(x,y,z,realZ);
+    Vector3f planeAC = Vector3f::crossProduct(a,c);
+    Vector3f planeBD = Vector3f::crossProduct(b,d);
+
 	glBegin(GL_QUADS);
-        glNormal3f(x[0],y[0],z[0]);
-        glColor3f(1,0,0);
-        glVertex3f(x[0], y[0], z[0]);
 
-        glNormal3f(x[1],y[1],z[1]);
-        glColor3f(1,1,0);
-        glVertex3f(x[1], y[1], z[1]);
+    switch(result) {
+        case true:
+            glNormal3f(x[0],y[0],z[0]);
+            glColor3f(1,0,0);
+            glVertex3f(x[0], y[0], z[0]);
 
-        glNormal3f(x[2],y[2],z[2]);
-        glColor3f(1,0,0);
-        glVertex3f(x[2], y[2], z[2]);
+            glNormal3f(x[1],y[1],z[1]);
+            glColor3f(1,1,0);
+            glVertex3f(x[1], y[1], z[1]);
 
-        glNormal3f(x[3],y[3],z[3]);
-        glColor3f(1,0,0);
-        glVertex3f(x[3], y[3], z[3]);
+            glNormal3f(x[2],y[2],z[2]);
+            glColor3f(1,0,0);
+            glVertex3f(x[2], y[2], z[2]);
+
+            glNormal3f(x[3],y[3],z[3]);
+            glColor3f(1,0,0);
+            glVertex3f(x[3], y[3], z[3]);
+            break;
+        
+        case false:
+            Vector3f two    = Vector3f(x[1],y[1],z[1]);
+            Vector3f four   = Vector3f(x[3],y[3],z[3]);
+            Vector3f first  = Vector3f(x[0],y[0],z[0]);
+            Vector3f third  = Vector3f(x[2],y[2],z[2]);
+
+            Vector3f vectorTwoFirst,vectorTwoThird;
+            Vector3f vectorFourFirst,vectorFourThird;
+
+            vectorTwoFirst.fromTo(two,first);
+            vectorTwoThird.fromTo(two,third);
+            vectorFourFirst.fromTo(four,first);
+            vectorFourThird.fromTo(four,third);
+
+            Vector3f crossProductForTwo = Vector3f::crossProduct
+                                          (vectorTwoFirst,vectorTwoThird);
+            Vector3f crossProductForFour = Vector3f::crossProduct
+                                          (vectorFourFirst,vectorFourThird);
+            
+            
+            glNormal3f(crossProductForTwo.x + crossProductForFour.x,crossProductForTwo.y + crossProductForFour.y,
+                       crossProductForTwo.z + crossProductForFour.z);
+            glColor3f(1,0,0);
+            glVertex3f(x[0], y[0], z[0]);
+
+            glNormal3f(crossProductForTwo.x,crossProductForTwo.y,crossProductForTwo.z);
+            glColor3f(1,1,0);
+            glVertex3f(x[1], y[1], z[1]);
+
+            glNormal3f(crossProductForTwo.x + crossProductForFour.x,crossProductForTwo.y + crossProductForFour.y,
+                       crossProductForTwo.z + crossProductForFour.z);
+            glColor3f(1,0,0);
+            glVertex3f(x[2], y[2], z[2]);
+
+            glNormal3f(crossProductForFour.x,crossProductForFour.y,crossProductForFour.z);
+            glColor3f(1,0,0);
+            glVertex3f(x[3], y[3], z[3]);
+
+            break;
+    }
 	glEnd();
 }
 
@@ -555,6 +655,7 @@ void buildPolygons()
     GLfloat x[4] = {0,0,0,0};
     GLfloat y[4] = {0,0,0,0};
     GLfloat z[4] = {0,0,0,0};
+    GLfloat realZ[4] = {0,0,0,0};
 
 
     // Loop over vector, place i index first cell, j index in first cell second line.
@@ -572,20 +673,24 @@ void buildPolygons()
         y[0] = (dl * distanceL -scene[0]/2.0f);
         x[0] = (dw * distanceW -scene[0]/2.0f);
         z[0] = ((MAX_HEIGHT*map[i])/255.0f);
+        realZ[0] = map[i];
 
         y[1] = (dl * distanceL -scene[0]/2.0f);
         x[1] = ((dw+1) * distanceW -scene[0]/2.0f);
         z[1] = ((MAX_HEIGHT*map[i+1])/255.0f);
+        realZ[1] = map[i+1];
         
         y[2] = ((dl+1) * distanceL -scene[0]/2.0f);
         x[2] = ((dw+1) * distanceW -scene[0]/2.0f);
         z[2] = ((MAX_HEIGHT*map[j+1])/255.0f);
+        realZ[2] = map[j+1];
         
         y[3] = ((dl+1) * distanceL -scene[0]/2.0f);
         x[3] = (dw * distanceW -scene[0]/2.0f);
         z[3] = ((MAX_HEIGHT*map[j])/255.0f);
+        realZ[3] = map[j];
 
-        drawQuad(x,y,z);
+        drawQuad(x,y,z,realZ);
     }
 }
 
@@ -633,7 +738,7 @@ void parseMap(vector<int> *map, int* width, int* legnth)
 
             if (i == 0)         { *width = stoi(s);  i++; } 
             else { if (i == 1)  { *legnth = stoi(s); i++;} 
-                else                {(map)->push_back(stoi(s));
+                else            {(map)->push_back(stoi(s));
                 }
             }
         }
@@ -718,7 +823,6 @@ int main(int argc, char**argv)
     // Parsing input files
     parseMap(&map,&width,&legnth);
     parseInit(&material,&house, &car, &sun);
-    printInitVectors();
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(900, 900);
