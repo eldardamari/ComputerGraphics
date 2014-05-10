@@ -39,7 +39,7 @@ GLfloat light = 0;
 GLfloat light_ambient[4]; 
 GLfloat light_diffuse[4];
 GLfloat light_specular[4];
-GLfloat light_position[] =  {22, 0, 0, 1.0}; // TODO
+GLfloat light_position[4];
 GLfloat light_direction[]=  {0,0,0};
 
 Vector3f a;
@@ -52,8 +52,32 @@ GLfloat textures[20];
 
 void initLight(void)
 {
-    glShadeModel(GL_SMOOTH);
-    glEnable(GL_LIGHTING);
+
+    light_ambient[0] = scene.at(4);
+    light_ambient[1] = scene.at(5);
+    light_ambient[2] = scene.at(6);
+    light_ambient[3] = 1.0f;
+    
+    light_diffuse[0] = sun.at(3);
+    light_diffuse[1] = sun.at(4);
+    light_diffuse[2] = sun.at(5);
+    light_diffuse[3] = 1.0f;
+
+    light_specular[0] = sun.at(3);
+    light_specular[1] = sun.at(4);
+    light_specular[2] = sun.at(5);
+    light_specular[3] = 1.0f;
+    
+    light_position[0] = sun.at(0);
+    light_position[1] = sun.at(1);
+    light_position[2] = sun.at(2);
+    light_position[3] = 0;
+    
+
+    GLfloat mat_a[] = {material.at(0), material.at(1), material.at(2), 1.0}; 
+    GLfloat mat_d[] = {material.at(3), material.at(4), material.at(5), 1.0}; 
+    GLfloat mat_s[] = {material.at(6), material.at(7), material.at(8), 1.0};
+    GLfloat low_sh[]= {5.0};
 
     // Light
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
@@ -63,18 +87,15 @@ void initLight(void)
 
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45);
-
     glEnable(GL_LIGHT0);
-
-    GLfloat mat_a[] = {material[0], material[1], material[2], 1.0}; 
-    GLfloat mat_d[] = {material[3], material[4], material[5], 1.0}; 
-    GLfloat mat_s[] = {material[6], material[7], material[8], 1.0}; 
-    GLfloat low_sh[]= {5.0};
 
     glMaterialfv(GL_FRONT, GL_AMBIENT,  mat_a); 
     glMaterialfv(GL_FRONT, GL_DIFFUSE,  mat_d); 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_s); 
     glMaterialfv(GL_FRONT, GL_SHININESS,low_sh);
+
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
 
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_NORMALIZE); // maintain normal vectors size
@@ -90,25 +111,11 @@ void init()
         MAX_HEIGHT = scene.at(2);
         CAMAERA_HEIGHT = scene.at(3);
 
-        light_ambient[0] = scene[4];
-        light_ambient[1] = scene[5];
-        light_ambient[2] = scene[6];
-        light_ambient[3] = 1.0f;
-        
-        light_diffuse[0] = sun[3];
-        light_diffuse[1] = sun[4];
-        light_diffuse[2] = sun[5];
-        light_diffuse[3] = 1.0f;
-        
-        light_specular[0] = sun[3];
-        light_specular[1] = sun[4];
-        light_specular[2] = sun[5];
-        light_specular[3] = 1.0f;
 
         gluPerspective(60, 1, 1, 100);
         gluLookAt(0,0, CAMAERA_HEIGHT, 0,0,0, 0, 1, 0);  //define view direction
 
-        /*initLight();*/
+        initLight();
 
 	/* return to modelview mode */
 	glMatrixMode(GL_MODELVIEW);
@@ -204,10 +211,10 @@ GLuint loadBMP_custom(const char * imagepath)
     }
 
     // Read ints from the byte array
-    dataPos    = *(int*)&(header[0x0A]);
-    imageSize  = *(int*)&(header[0x22]);
-    widthBmp      = *(int*)&(header[0x12]);
-    height     = *(int*)&(header[0x16]);
+    dataPos     = *(int*)&(header[0x0A]);
+    imageSize   = *(int*)&(header[0x22]);
+    widthBmp    = *(int*)&(header[0x12]);
+    height      = *(int*)&(header[0x16]);
 
     if (imageSize==0)    imageSize=widthBmp*height*3; // 3 : one byte for each Red, Green and Blue component
     if (dataPos==0)      dataPos=54; // The BMP header is done that way
@@ -250,6 +257,13 @@ void loadTextures()
     textures[6] = loadBMP_custom("./textures/water.bmp");
     textures[7] = loadBMP_custom("./textures/asphalt.bmp");
     textures[8] = loadBMP_custom("./textures/rock.bmp");
+    textures[9] = loadBMP_custom("./textures/door.bmp");
+    textures[10] = loadBMP_custom("./textures/window.bmp");
+    textures[11] = loadBMP_custom("./textures/redcar.bmp");
+    textures[12] = loadBMP_custom("./textures/backwindow.bmp");
+    textures[13] = loadBMP_custom("./textures/grass2.bmp");
+    textures[14] = loadBMP_custom("./textures/redroof.bmp");
+    textures[15] = loadBMP_custom("./textures/newwindow.bmp");
 }
 
 void draw_axes(void)
@@ -280,79 +294,78 @@ void draw_axes(void)
 
 void drawCube(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2, GLfloat h)
 {
-      glColor3f( 1.0,  1.0, 1.0 );
+     glColor3f( 1.0f,  1.0f, 1.0f );
 
       //side - FRONT
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x1, y1, z1 );      // P1 is red
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x1, y1, h  );      // P2 is green
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x2, y1, h  );      // P3 is blue
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x2, y1, z1 );      // P4 is purple
-
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x1, y1, z1 );      // P1 is red
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x1, y1, h  );      // P2 is green
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x2, y1, h  );      // P3 is blue
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x2, y1, z1 );      // P4 is purple
       glEnd();
 
       //side - BACK
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x1, y2, z2 );
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x1, y2, h );
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x2, y2, h );
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x2, y2, z2 );
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x1, y2, z2 );
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x1, y2, h );
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x2, y2, h );
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x2, y2, z2 );
       glEnd();
 
       //side - RIGHT
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x2, y1, z1 );
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x2, y1, h );
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x2, y2, h );
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x2, y2, z2 );
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x2, y1, z1 );
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x2, y1, h );
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x2, y2, h );
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x2, y2, z2 );
       glEnd();
 
       //side - LEFT
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x1, y1, z1 );
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x1, y1, h );
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x1, y2, h );
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x1, y2, z2 );
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x1, y1, z1 );
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x1, y1, h );
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x1, y2, h );
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x1, y2, z2 );
       glEnd();
 
       //side - TOP
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x1, y1, h );
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x1, y2, h );
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x2, y2, h );
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x2, y1, h );
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x1, y1, h );
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x1, y2, h );
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x2, y2, h );
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x2, y1, h );
       glEnd();
 
       //side - BOTTOM
       glBegin(GL_QUADS);
-      glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
-      glVertex3f( x1, y1, z1 );
-      glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
-      glVertex3f( x1, y2, z1 );
-      glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
-      glVertex3f( x2, y2, z2 );
-      glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
-      glVertex3f( x2, y1, z2 );
+          glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+          glVertex3f( x1, y1, z1 );
+          glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+          glVertex3f( x1, y2, z1 );
+          glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+          glVertex3f( x2, y2, z2 );
+          glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+          glVertex3f( x2, y1, z2 );
       glEnd();
 }
 
@@ -360,7 +373,7 @@ void drawPyramid(GLfloat x1, GLfloat y1, GLfloat z1,
                  GLfloat x2, GLfloat y2, GLfloat z2, 
                  GLfloat centerX, GLfloat centerY, GLfloat centerZ )
 {
-    glColor3f (   1.0,    0.0,    0.0 );
+    /*glColor3f (   1.0,    0.0,    0.0 );*/
 
     // ROOF - Right
     glBegin(GL_TRIANGLES);
@@ -411,7 +424,7 @@ void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1,
 
     glBindTexture (GL_TEXTURE_2D, textures[0]);
     glEnable (GL_TEXTURE_2D);
-    drawCube(x1, y1, normalizedZ1, x2, y2, normalizedZ2, 3.5);
+        drawCube(x1, y1, normalizedZ1, x2, y2, normalizedZ2, 3.5);
     glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     GLfloat centerX = x1 + ((x2 - (x1)) / 2);
@@ -419,37 +432,59 @@ void drawHouse(GLfloat x1, GLfloat y1, GLfloat z1,
     GLfloat centerZ = 5;
 
     // ROOF
-    glBindTexture (GL_TEXTURE_2D, textures[1]);
+    glBindTexture (GL_TEXTURE_2D, textures[14]);
     glEnable (GL_TEXTURE_2D);
-    drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
+        drawPyramid(x1, -2.5, 3.5, x2, -5.5, 3.5, centerX, centerY, centerZ );
     glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     // DOOR
-    glColor3f (   0.5,    0.5,    0.5 );
+    /*glColor3f (   0.5,    0.5,    0.5 );*/
+    glBindTexture (GL_TEXTURE_2D, textures[9]);
+    glEnable (GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glVertex3f( centerX+0.5, y1, normalizedZ1 );
-    glVertex3f( centerX+0.5, y1, normalizedZ1 + 1.5 );
-    glVertex3f( centerX-0.5, y1, normalizedZ2 + 1.5 );
-    glVertex3f( centerX-0.5, y1, normalizedZ2 );
+        glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+        glVertex3f( centerX+0.5, y1+0.1, normalizedZ1 );
+        glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+        glVertex3f( centerX+0.5, y1+0.1, normalizedZ1 + 1.5 );
+        glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+        glVertex3f( centerX-0.5, y1+0.1, normalizedZ2 + 1.5 );
+        glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+        glVertex3f( centerX-0.5, y1+0.1, normalizedZ2 );
     glEnd();
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 
     // WINDOW - Right
-    glColor3f (   0.0,    1.0,    0.0 );
+    /*glColor3f (   0.0,    1.0,    0.0 );<]*/
+    glBindTexture (GL_TEXTURE_2D, textures[15]);
+    glEnable (GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glVertex3f( x2, centerY+1, normalizedZ1 + 1.5 );
-    glVertex3f( x2, centerY+1, normalizedZ1 + 2.5 );
-    glVertex3f( x2, centerY-1, normalizedZ2 + 2.5 );
-    glVertex3f( x2, centerY-1, normalizedZ2 +1.5 );
+        glTexCoord2f (0.0f,0.0f); //[> lower left corner of image <]
+        glVertex3f( x2+0.01, centerY+1, normalizedZ1 + 1.5 );
+        glTexCoord2f (0.0f, 1.0f); //[> upper left corner of image <]
+        glVertex3f( x2+0.01, centerY+1, normalizedZ1 + 2.5 );
+        glTexCoord2f (1.0f, 1.0f); //[> upper right corner of image <]
+        glVertex3f( x2+0.01, centerY-1, normalizedZ2 + 2.5 );
+        glTexCoord2f (1.0f, 0.0f); //[> lower right corner of image <]
+        glVertex3f( x2+0.01, centerY-1, normalizedZ2 +1.5 );
     glEnd();
+    glDisable (GL_TEXTURE_2D); //[> disable texture mapping 
+
 
     // WINDOW - Left
-    glColor3f (   0.0,    1.0,    0.0 );
+//    glColor3f (   0.0,    1.0,    0.0 );<]
+    glBindTexture (GL_TEXTURE_2D, textures[15]);
+    glEnable (GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glVertex3f( x1, centerY+1, normalizedZ1 + 1.5 );
-    glVertex3f( x1, centerY+1, normalizedZ1 + 2.5 );
-    glVertex3f( x1, centerY-1, normalizedZ2 + 2.5 );
-    glVertex3f( x1, centerY-1, normalizedZ2 +1.5 );
+        glTexCoord2f (0.0f,0.0f); //[> lower left corner of image <]
+        glVertex3f( x1-0.1, centerY+1, normalizedZ1 + 1.5 );
+        glTexCoord2f (0.0f, 1.0f); //[> upper left corner of image <]
+        glVertex3f( x1-0.1, centerY+1, normalizedZ1 + 2.5 );
+        glTexCoord2f (1.0f, 1.0f); //[> upper right corner of image <]
+        glVertex3f( x1-0.1, centerY-1, normalizedZ2 + 2.5 );
+        glTexCoord2f (1.0f, 0.0f); //[> lower right corner of image <]
+        glVertex3f( x1-0.1, centerY-1, normalizedZ2 +1.5 );
     glEnd();
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
 }
 
 void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
@@ -464,8 +499,9 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
     Cz = Cz*MAX_HEIGHT/255.0f + 0.5;
     GLfloat rCz = Cz;
 
+    // front plate wheel
     glBegin(GL_TRIANGLE_FAN);
-        glColor3f(0.9,0.9,0.9);
+        glColor3f(0.0,0.0,0.0);
         Cx += 0.3;
 
         glNormal3f(Cx,Cy,Cz);
@@ -485,8 +521,9 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
         glVertex3f(Cx,y,z);
     glEnd();
 
+    // back plate wheel
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(0.9,0.9,0.9);
+    glColor3f(0.0,0.0,0.0);
     Cx -= 0.3;
 
     glVertex3f(Cx,Cy,Cz);
@@ -494,7 +531,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
         z = rCz*(GLfloat)sin(angle*GL_PI/180.0f) + Cz;
         y = rCz*(GLfloat)cos(angle*GL_PI/180.0f) + Cy;
         glNormal3f(Cx,y,z);
-        glVertex3f(Cx, y , z);
+        glVertex3f(Cx,y,z);
         bPlate[i][0] = Cx;
         bPlate[i][1] = y;
         bPlate[i][2] = z;
@@ -507,7 +544,7 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
 
     // cover wheel
     glBegin(GL_TRIANGLE_STRIP);
-    glColor3f(0,0,1);
+    glColor3f(0.0,0.0,0.0);
     for (i = 0 ; i < 36 ; i++) {
         glNormal3f( fPlate[i][0], fPlate[i][1], fPlate[i][2]); 
         glVertex3f( fPlate[i][0], fPlate[i][1], fPlate[i][2]); 
@@ -524,49 +561,69 @@ void draw_wheel(GLfloat Cx, GLfloat Cy, GLfloat Cz)
 void drawCarBody(GLfloat x1, GLfloat y1, GLfloat z1, 
                  GLfloat x2, GLfloat y2, GLfloat z2)
 {
+    glColor3f(1.0f,1.0f,1.0f);
+
     z1 = z1*MAX_HEIGHT/255 +0.5;
     z2 = z2*MAX_HEIGHT/255 +0.5;
 
-    drawCube(x1+0.2 ,y1-1.2,z1, 
-             x2+0.2 ,y2+1 ,z1,
-             1.3);
-    drawCube(x1+0.2f,y1   ,1.3, 
-             x2+0.2 ,y2-1.3,1.3,
-             2.5);
+    glBindTexture (GL_TEXTURE_2D, textures[11]);
+    glEnable (GL_TEXTURE_2D);
+        drawCube(x1+0.2 ,y1-1.2,z1, 
+                 x2+0.2 ,y2+1 ,z1,
+                 1.3);
+        drawCube(x1+0.2f,y1   ,1.3, 
+                 x2+0.2 ,y2-1.3,1.3,
+                 2.5);
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
     
     // back winshield
-    glColor3f( 1.0,  0.0, 0.0 );
+    glBindTexture (GL_TEXTURE_2D, textures[12]);
+    glEnable (GL_TEXTURE_2D);
+    /*glColor3f( 1.0,  0.0, 0.0 );*/
     glBegin(GL_QUADS);
-        glNormal3f(x2+0.2,y1,z1);
-        glVertex3f( x2+0.2, y1, z1 );
-        glNormal3f(x1+0.2,y1,z1);
-        glVertex3f( x1+0.2, y1, z1 );
-        glNormal3f(x1+0.2,y1,2.5);
-        glVertex3f( x1+0.2, y1, 2.5);
-        glNormal3f(x2+0.2,y1,2.5);
-        glVertex3f( x2+0.2, y1, 2.5 );
+        glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+        glNormal3f(x2+0.2,y1-0.05,z1);
+        glVertex3f( x2+0.2, y1-0.05, z1 );
+
+        glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+        glNormal3f(x1+0.2,y1-0.05,z1);
+        glVertex3f( x1+0.2, y1-0.05, z1 );
+
+        glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+        glNormal3f(x1+0.2,y1-0.05,2.5);
+        glVertex3f( x1+0.2, y1-0.05, 2.5);
+
+        glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+        glNormal3f(x2+0.2,y1-0.05,2.5);
+        glVertex3f( x2+0.2, y1-0.05, 2.5 );
     glEnd();
 
     // front winshield
-    glColor3f( 1.0,  0.0, 1.0 );
+    /*glColor3f( 1.0,  0.0, 1.0 );*/
     glBegin(GL_QUADS);
-        glNormal3f(x2+0.2   ,y2-1.3 ,z1);
-        glVertex3f(x2+0.2   ,y2-1.3 ,z1);
+        glTexCoord2f (0.0f,0.0f); /* lower left corner of image */
+        glNormal3f(x2+0.2   ,y2-1.285 ,z1);
+        glVertex3f(x2+0.2   ,y2-1.285 ,z1);
 
-        glNormal3f(x2+0.2   ,y2-1.3 ,z1);
-        glVertex3f(x1+0.2   ,y2-1.3 ,z1);
+        glTexCoord2f (0.0f, 1.0f); /* upper left corner of image */
+        glNormal3f(x2+0.2   ,y2-1.285 ,z1);
+        glVertex3f(x1+0.2   ,y2-1.285 ,z1);
 
-        glNormal3f(x2+0.2   ,y2-1.3 ,2.5);
-        glVertex3f(x1+0.2   ,y2-1.3 ,2.5);
+        glTexCoord2f (1.0f, 1.0f); /* upper right corner of image */
+        glNormal3f(x2+0.2   ,y2-1.285 ,2.5);
+        glVertex3f(x1+0.2   ,y2-1.285 ,2.5);
 
-        glNormal3f(x2+0.2   ,y2-1.3 ,2.5);
-        glVertex3f(x2+0.2   ,y2-1.3 ,2.5);
+        glTexCoord2f (1.0f, 0.0f); /* lower right corner of image */
+        glNormal3f(x2+0.2   ,y2-1.285 ,2.5);
+        glVertex3f(x2+0.2   ,y2-1.285 ,2.5);
+    glDisable (GL_TEXTURE_2D); /* disable texture mapping */
     glEnd();
 }
 
 void drawCar(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)
 {
-    glBindTexture (GL_TEXTURE_2D, textures[2]);
+    glColor3f(1.0f,1.0f,1.0f);
+    glBindTexture (GL_TEXTURE_2D, textures[11]);
     glEnable (GL_TEXTURE_2D);
         draw_wheel(x1   ,y1     ,z1);
         draw_wheel(x1   ,y2     ,z1);
@@ -606,6 +663,7 @@ void drawSun(void)
         glTranslatef(sun[0],sun[1],sun[2]);
         
         glColor3f(sun[3],sun[4],sun[5]);
+
         glutSolidSphere(1,36,36);
         
         light_direction[0] = -sun[0];
@@ -616,9 +674,11 @@ void drawSun(void)
         light_position[1] = sun[1];
         light_position[2] = sun[2];
 
-        /*initLight();*/
+        initLight();
+        
 
     glPopMatrix();
+    glColor3f(1.0f,1.0f,1.0f);
 }
 
 void rotateSun(void) 
@@ -631,6 +691,7 @@ void resetlight(void)
 {
     initLight();
 }
+
 int normalVectorsTest(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
 {
     Vector3f vectorAD,vectorAC,vectorBA,vectorBC;
@@ -645,9 +706,6 @@ int normalVectorsTest(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
     b.normalize();
     c.normalize();
     d.normalize();
-    /*cout << "a.x = " << a.x << " ";
-    cout << "a.y = " << a.y << " ";
-    cout << "a.z = " << a.z << " " << endl;*/
 
     vectorAD.fromTo(a,d); // create vectors from a to d
     vectorAC.fromTo(a,c);// create vectores from a to c
@@ -657,16 +715,6 @@ int normalVectorsTest(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[])
     crossProductP1 = Vector3f::crossProduct(vectorAD,vectorAC);
     crossProductP2 = Vector3f::crossProduct(vectorBA,vectorBC);
     
-    /*cout << "crossProductP1.x = " << crossProductP1.x << " " << endl;
-    cout << "crossProductP2.x = " << crossProductP2.x << " " << endl;
-    cout << "crossProductP1.y = " << crossProductP1.y << " " << endl;
-    cout << "crossProductP2.y = " << crossProductP2.y << " " << endl;
-    cout << "crossProductP1.z = " << crossProductP1.z << " " << endl;
-    cout << "crossProductP2.z = " << crossProductP2.z << " " << endl;
-    cout << " _________________________________________________" << endl;*/
-
-    /*cout << crossProductP1 << endl;*/
-
     if (crossProductP1.x == crossProductP2.x &&
         crossProductP1.y == crossProductP2.y &&
         crossProductP1.z == crossProductP2.z) 
@@ -683,27 +731,26 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[],
     Vector3f planeAC = Vector3f::crossProduct(a,c);
     Vector3f planeBD = Vector3f::crossProduct(b,d);
 
-    glColor3f( 1.0,  1.0, 1.0 );
     glBindTexture (GL_TEXTURE_2D, textureId);
     glEnable (GL_TEXTURE_2D);
 	glBegin(GL_QUADS);
 
     switch(result) {
         case true:
-            glNormal3f(x[0],y[0],z[0]);
             glTexCoord2f (tX[0],tY[0]); /* upper left corner of image */
+            glNormal3f(x[0],y[0],z[0]);
             glVertex3f(x[0], y[0], z[0]);
 
+            glTexCoord2f (tX[1],tY[1]); /* upper right corner of image */ 
             glNormal3f(x[1],y[1],z[1]);
-            glTexCoord2f (tX[2],tY[1]); /* upper right corner of image */
             glVertex3f(x[1], y[1], z[1]);
 
-            glNormal3f(x[2],y[2],z[2]);
             glTexCoord2f (tX[2],tY[2]); /* lower right corner of image */
+            glNormal3f(x[2],y[2],z[2]);
             glVertex3f(x[2], y[2], z[2]);
 
-            glNormal3f(x[3],y[3],z[3]);
             glTexCoord2f (tX[3],tY[3]); /* lower left corner of image */
+            glNormal3f(x[3],y[3],z[3]);
             glVertex3f(x[3], y[3], z[3]);
             break;
         
@@ -727,24 +774,24 @@ void drawQuad(GLfloat x[], GLfloat y[], GLfloat z[],GLfloat realZ[],
                                           (vectorFourFirst,vectorFourThird);
             
             
+            glTexCoord2f (tX[0],tY[0]); /* upper left corner of image */
             glNormal3f(crossProductForTwo.x + crossProductForFour.x,
                        crossProductForTwo.y + crossProductForFour.y,
                        crossProductForTwo.z + crossProductForFour.z);
-            glTexCoord2f (tX[0],tY[0]); /* upper left corner of image */
             glVertex3f(x[0], y[0], z[0]);
 
+            glTexCoord2f (tX[1],tY[1]); /* upper right corner of image */ // 
             glNormal3f(crossProductForTwo.x,crossProductForTwo.y,crossProductForTwo.z);
-            glTexCoord2f (tX[2],tY[1]); /* upper right corner of image */
             glVertex3f(x[1], y[1], z[1]);
 
+            glTexCoord2f (tX[2],tY[2]); /* lower right corner of image */
             glNormal3f(crossProductForTwo.x + crossProductForFour.x,
                        crossProductForTwo.y + crossProductForFour.y,
                        crossProductForTwo.z + crossProductForFour.z);
-            glTexCoord2f (tX[2],tY[2]); /* lower right corner of image */
             glVertex3f(x[2], y[2], z[2]);
 
-            glNormal3f(crossProductForFour.x,crossProductForFour.y,crossProductForFour.z);
             glTexCoord2f (tX[3],tY[3]); /* lower left corner of image */
+            glNormal3f(crossProductForFour.x,crossProductForFour.y,crossProductForFour.z);
             glVertex3f(x[3], y[3], z[3]);
             break;
     }
@@ -775,7 +822,7 @@ GLfloat chooseTexturesFromMap(GLfloat x[],GLfloat y[],GLfloat z[])
         }
 
         if (range < 100) {
-            return textures[4]; // grass
+            return textures[13]; // grass
         } else if (range <= 200 && range >= 100) {
             return textures[8]; // rocks
         } else if (range > 200) {
@@ -832,8 +879,8 @@ void buildPolygons()
         z[3] = ((MAX_HEIGHT*map[j])/255.0f);
         realZ[3] = map[j];
             
-        GLfloat textureId = chooseTexturesFromMap(x,y,realZ);
-        drawQuad(x,y,z,tX,tY,realZ,textureId);
+        GLfloat textureId = chooseTexturesFromMap(x,y,z);
+        drawQuad(x,y,z,realZ,tX,tY,textureId);
         continue;
 
         if(z[0]==z[1] && z[0]!=z[2] && z[0]!=z[3]) {
@@ -853,6 +900,8 @@ void buildPolygons()
                 t1 = ( (range-z[0]) / (z[3]-z[0]) );
                 t2 = ( (range-z[0]) / (z[2]-z[1]) );
             }
+            t1 = t1*MAX_HEIGHT/255;
+            t2 = t2*MAX_HEIGHT/255;
 
             newX[0] = x[0];
             newY[0] = y[0];
@@ -862,12 +911,12 @@ void buildPolygons()
             newY[1] = y[1];
             newZ[1] = z[1];
 
-            newX[2] = x[1] + t2*(x[2]-x[1]);
-            newY[2] = y[1] + t2*(y[2]-y[1]);
+            newX[2] = (x[1] + t2*(x[2]-x[1]))*MAX_HEIGHT/255;
+            newY[2] = (y[1] + t2*(y[2]-y[1]))*MAX_HEIGHT/255;
             newZ[2] = range;
 
-            newX[3] = x[0] + t1*(x[3]-x[0]);
-            newY[3] = y[0] + t1*(y[3]-y[0]);
+            newX[3] = (x[0] + t1*(x[3]-x[0]))*MAX_HEIGHT/255;
+            newY[3] = (y[0] + t1*(y[3]-y[0]))*MAX_HEIGHT/255;
             newZ[3] = range;
 
             textureId = chooseTexturesFromMap(newX,newY,newZ);
@@ -951,13 +1000,13 @@ void parseInit(vector<GLfloat> *material, vector<GLfloat> *house,
 
             if (!getline(ss,s,',')) break;
 
-            if (s[0] > 'a' && s[0] < 'z')
+            if (s[0] > 'a' && s[0] < 'z') {
                 iter++;
-
-            pos = s.find(" ");         // position of "live" in str
-
-            if (pos != -1)
+                pos = s.find(" ");         // position of "live" in str
+                if (pos != -1)
                 s = s.substr(pos + 1);
+            }
+
 
             switch(iter) {
 
@@ -1015,18 +1064,20 @@ void mydisplay(void)
     //  Clear screen and Z-buffer
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    draw_axes();
+    drawSun();
+
+    /*draw_axes();*/
+    buildPolygons();
 
     drawCar(car[0],car[1],car[2],car[3],car[4],car[5]);
     drawHouse(house[0],house[1],house[2],
              house[3],house[4],house[5]);
-    drawSun();
-    buildPolygons();
 
     glutSwapBuffers();
 }
 
-int main(int argc, char**argv) {
+int main(int argc, char**argv) 
+{
     glutInit(&argc, argv);
 
     // Parsing input files
