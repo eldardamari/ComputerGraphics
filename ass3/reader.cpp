@@ -1,6 +1,11 @@
 #include <stdio.h>
-#include "glut.h"
-#define maxSize 65535 
+#ifdef __APPLE__
+    #include <GLUT/glut.h>
+#else
+    #include <GL/glut.h>
+#endif
+
+#define maxSize 65535
 float rot;
 GLfloat vertices[maxSize*3];
 GLfloat normals[maxSize*2*3];
@@ -101,14 +106,14 @@ void draw()
 			}
 		glEnd();
 	}
-	
+
 }
 
 void init()
 {
 
 	glClearColor(0,0,0,1);  //black
-	
+
 	//enable tests
 	//glShadeModel(GL_FLAT);
 
@@ -118,7 +123,7 @@ void init()
 	//GLfloat light_direction[]={0,-1,0};
 	GLfloat light_ambient[] = {0.5, 0.5, 0.5, 1.0}; //color
 	GLfloat light_diffuse[] = {0.0, 0.5, 0.5, 1.0}; //color
-	GLfloat light_specular[] = {0.0, 0.0, 0.5, 1.0}; 
+	GLfloat light_specular[] = {0.0, 0.0, 0.5, 1.0};
 	GLfloat light_position[]={0,1.0,1,0};
 	//GLfloat angle[] = {20.0};
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
@@ -131,12 +136,12 @@ void init()
 	GLfloat mat_d[] = {0.0, 0.6, 0.7, 1.0};
 	GLfloat mat_s[] = {0.0, 0.0, 0.8, 1.0};
 	GLfloat low_sh[] = {5.0};
-	
+
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_a);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_d);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_s);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, low_sh);
-	
+
 	reader();
 }
 
@@ -145,7 +150,7 @@ void display(void)
 {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
 	glLoadIdentity();
 	glRotatef(rot,0,1,0);
     glutSolidSphere(1.5,32,32);
