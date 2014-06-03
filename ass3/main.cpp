@@ -53,17 +53,8 @@ void readMaterials(GLfloat materials[]) {
     fclose(f);
 }
 
-void meterials(void)
+void addMaterials(GLfloat materials[])
 {
-    GLfloat materials[numberOfObjectsInScene*9];
-
-    readMaterials(materials);
-
-//    for(int i = 0 ; i < sizeof(materials)/sizeof(*materials) ; i++)
-//    {
-//        cout << materials[i] << endl;
-//    }
-
 	GLfloat mat_a[] = {materials[0],materials[1],materials[2]};
 	GLfloat mat_d[] = {materials[3],materials[4],materials[5]};
 	GLfloat mat_s[] = {materials[6],materials[7],materials[8]};
@@ -90,8 +81,6 @@ void init()
 
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
-
-    meterials();
 
     glMatrixMode(GL_PROJECTION); /* switch matrix mode */
 	glLoadIdentity();			 //load Identity matrix
@@ -268,13 +257,20 @@ void draw_axes(void)
 
 void draw()
 {
+    GLfloat materials[numberOfObjectsInScene*9];
+    readMaterials(materials);
+    for(int i = 0 ; i < sizeof(materials)/sizeof(*materials) ; i++)
+    {
+        cout << materials[i] << endl;
+    }
+
 	for(int i=0, k=0 ; i < fIndex && k < eIndex ; i += faceElements[k]*2, k++)
 	{
 		glBegin(GL_POLYGON);
-        for(int j=0;j<faceElements[k]*2;j+=2)
+        for(int j=0 ; j < faceElements[k]*2 ; j+=2)
         {
-            glNormal3f(normals[(faces[i+j+1]-1)*3],normals[(faces[i+j+1]-1)*3+1],normals[(faces[i+j+1]-1)*3+2]);
-            glVertex3f(vertices[(faces[i+j]-1)*3],vertices[(faces[i+j]-1)*3+1],vertices[(faces[i+j]-1)*3+2]);
+            glNormal3f(normals[(faces[i+j+1]-1)*3], normals[(faces[i+j+1]-1)*3+1], normals[(faces[i+j+1]-1)*3+2]);
+            glVertex3f(vertices[(faces[i+j]-1)*3], vertices[(faces[i+j]-1)*3+1], vertices[(faces[i+j]-1)*3+2]);
         }
 		glEnd();
 	}
