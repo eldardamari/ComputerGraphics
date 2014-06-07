@@ -21,27 +21,39 @@ int pickedItem = -2;
 int array[100];
 int picked_x[255];
 int picked_y[255];
+static GLfloat picked_x_mid[255];
+static GLfloat picked_y_mid[255];
+static GLfloat picked_scale[255];
 vector < vector<double> > objCenter;
 
-static GLfloat theta = 0.0; // Rotation (X,Y,Z)
 static int lastx = 0, lasty = 0;
 static GLfloat rotate_x = 0;
 static GLfloat rotate_y = 0;
 static GLfloat  scaling = 1.0f;
+static GLfloat global_rotate_x = 0;
+static GLfloat global_rotate_y = 0;
+static GLfloat global_rotate_x_diff = 0;
+static GLfloat global_rotate_y_diff = 0;
+
+static GLfloat cam_rotate_x = 0.01;
+static GLfloat cam_rotate_y = 0.01;
+static GLfloat cam_rotate_x_temp = 0;
+static GLfloat cam_rotate_y_temp = 0;
 
 //middle
-static GLfloat mid_rotate_x = 0;
-static GLfloat mid_rotate_y = 0;
-static int mid_lastx = 0;
-static int mid_lasty = 0;
+static GLfloat mid_global_rotate_x = 0.01;
+static GLfloat mid_global_rotate_y = 0;
+static GLfloat mid_global_rotate_x_diff = 0;
+static GLfloat mid_global_rotate_y_diff = 0;
 
 bool mouse_left   = false;
 bool mouse_right  = false;
 bool mouse_middle = false;
-bool camera_mode = true;
-bool picking_mode = false;
-bool global_mode = false;
+bool camera_mode    = true;
+bool picking_mode   = false;
+bool global_mode    = false;
 int backspace = 0;
+int flag = 0;
 
 int mode = 0;
 int color = 255;
@@ -68,6 +80,10 @@ GLfloat light_specular[]    = { 0.0, 0.0, 0.5, 1.0 };
 GLfloat light_position[]    = { 0, 1.0, 1.0, 0};
 GLfloat light_direction[]   = { 0, -1, 0 };
 GLfloat shine[]             = { 5.0 };
+    
+float center_x = 0;
+float center_y = 0;
+float center_z = 0;
 
 void init()
 {
@@ -99,9 +115,8 @@ void init()
 
 void addMaterials(  GLfloat a1, GLfloat a2, GLfloat a3,
                     GLfloat d1, GLfloat d2, GLfloat d3,
-                    GLfloat s1, GLfloat s2, GLfloat s3  ) {
-
-//    cout << a1 << a2 << a3 << d1 << d2 << d3 << s1 << s2 << s3 << endl;
+                    GLfloat s1, GLfloat s2, GLfloat s3  ) 
+{
 
 	GLfloat mat_a[] = {a1,a2,a3};
 	GLfloat mat_d[] = {d1,d2,d3};
@@ -112,7 +127,8 @@ void addMaterials(  GLfloat a1, GLfloat a2, GLfloat a3,
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  mat_s);
 }
 
-void readMaterials(GLfloat materials[]) {
+void readMaterials(GLfloat materials[]) 
+{
 
     f = fopen("colorTable.csv", "r");
 
@@ -131,9 +147,8 @@ void readMaterials(GLfloat materials[]) {
 void reader()
 {
 	char c;
-	f = fopen("scene.obj","r");
+	f = fopen("./util/scene.obj","r");
 	int b = 0;
-	float tmp;
 	vIndex = 0;
 	vnIndex = 0;
 	fIndex = 0;
@@ -143,6 +158,16 @@ void reader()
     double x=0, y=0, z=0;
     int firstTime =1;
     int numOfVertices = 0;
+
+    for( int r=0 ; r < 255 ; r++) {
+        picked_x[r] = 0;
+        picked_y[r] = 0;
+        picked_scale[r] = 1;
+        picked_x_mid[r] = 0;
+        picked_y_mid[r] = 0;
+    }
+
+
 
 	c = fgetc(f);
 
@@ -164,7 +189,6 @@ void reader()
                     center.push_back(y/(double)numOfVertices);
                     center.push_back(z/(double)numOfVertices);
                     objCenter.push_back(center);
-                    cout << "numOfVertices= " << numOfVertices << endl;
 
                     x = 0;
                     y = 0;
@@ -189,12 +213,6 @@ void reader()
 					z+= vertices[vIndex+2];
 				    vIndex+=3;
 				    numOfVertices++;
-
-                    cout << "x=" << x << endl;
-                    cout << "y=" << y << endl;
-                    cout << "z=" << z << endl;
-                    //exit(1);
-
 				}
 			break;
 			case 'f':
@@ -232,85 +250,94 @@ void reader()
 
 	//printf("inxdices %d %d %d %d %d\n",vIndex,vnIndex,fIndex,eIndex,line);
     //printf("objects: %d\n",numberOfObjectsInScene);
-    cout << "1x=" << objCenter[0][0] << endl;
-    cout << "1y=" << objCenter[0][1] << endl;
-    cout << "1z=" << objCenter[0][2] << endl;
-
-    cout << "2x=" << objCenter[1][0] << endl;
-    cout << "2y=" << objCenter[1][1] << endl;
-    cout << "2z=" << objCenter[1][2] << endl;
-
-    cout << "3x=" << objCenter[2][0] << endl;
-    cout << "3y=" << objCenter[2][1] << endl;
-    cout << "3z=" << objCenter[2][2] << endl;
-
-    cout << "4x=" << objCenter[3][0] << endl;
-    cout << "4y=" << objCenter[3][1] << endl;
-    cout << "4z=" << objCenter[3][2] << endl;
-
-    cout << "5x=" << objCenter[4][0] << endl;
-    cout << "5y=" << objCenter[4][1] << endl;
-    cout << "5z=" << objCenter[4][2] << endl;
 }
 
-void mouseMotion(int x, int y) {
+void mouseMotion(int x, int y) 
+{
     int delta_x, delta_y;
-    int mid_delta_x, mid_delta_y;
 
     // Camera
     if(camera_mode) {
         if(mouse_left) {
+            //cout << "in motion -> mouse left " << endl;
             delta_x = (lastx - x);
             delta_y = (lasty - y);
 
             rotate_x  += (float)(delta_x) / 5.0f;
-            rotate_y  -= (float)(delta_y) / 5.0f;
+            rotate_y  -= (float)(delta_y) / 4.0f;
 
             lastx = x;
             lasty = y;
         }
         if(mouse_right) {
-            delta_y = lasty - y;
-
-            if ( abs(delta_y) < 10 ){ scaling  += (float)(delta_y) / 100.0f;  }
-
-            if ( scaling < 00.1f) scaling = 0.1f;
-            if ( scaling > 10.0f) scaling = 10.0f;
-
-            lasty = y;
+            delta_y = (cam_rotate_y_temp - y);
+            cam_rotate_y += (float)delta_y;
+            cam_rotate_y_temp = y;
         }
 
         if(mouse_middle) {
-           mid_delta_x = (mid_lastx - x);
-           mid_delta_y = (mid_lasty - y);
-
-           mid_rotate_x -= (float)(mid_delta_x) / 10.0f;
-           mid_rotate_y -= (float)(mid_delta_y) / 10.0f;
-
-           mid_lastx = x;
-           mid_lasty = y;
+            delta_x = (cam_rotate_x_temp - x);
+            cam_rotate_x += (float)delta_x/3.5f;
+            cam_rotate_x_temp = x;
         }
     }
 
-    // Global
+    // Global Mode
     if(global_mode) {
+            
+        if (mouse_left) {
+                    global_rotate_y = x - global_rotate_x_diff;
+                    global_rotate_x = y + global_rotate_y_diff;
+        }
 
+        if (mouse_right) {
+                delta_y = lasty - y;
+                if ( abs(delta_y) < 10 ){ scaling  += (float)(delta_y) / 100.0f;  }
+                if ( scaling < 00.1f) scaling = 0.1f;
+                if ( scaling > 10.0f) scaling = 10.0f;
+                lasty = y;
+            }
+        
+        if (mouse_middle) {
+            mid_global_rotate_x = (mid_global_rotate_x_diff-x);
+            mid_global_rotate_y = (mid_global_rotate_y_diff-y);
+        }
     }
 
-    // Picking
+    // Picking Mode
     if(picking_mode) {
+
         if(mouse_left) {
           if (pickedItem != -2) {
-             picked_x[pickedItem] -= (pick_x-y)/10.0;
-             picked_y[pickedItem] -= (pick_y-x)/10.0;
+             picked_x[pickedItem] -= (pick_x-y)/60.0;
+             picked_y[pickedItem] -= (pick_y-x)/60.0;
+          }
+          pick_x = x;
+          pick_y = y;
+        }
+
+        if (mouse_right) {
+            if (pickedItem != -2) {
+                picked_scale[pickedItem] += (pick_y - y);
+            }
+            pick_x = x;
+            pick_y = y;
+        }
+
+        if (mouse_middle) {
+          if (pickedItem != -2) {
+             picked_x_mid[pickedItem] += (pick_x-x)/4.0;
+             picked_y_mid[pickedItem] += (pick_y-y)/4.0;
           }
           pick_x = x;
           pick_y = y;
         }
     }
+    glutPostRedisplay();
 }
 
-void mouseClicks(int button, int state, int x,int y) {
+void mouseClicks(int button, int state, int x,int y) 
+{
     switch(button) {
         case GLUT_LEFT_BUTTON:
             mouse_left = true;
@@ -319,12 +346,14 @@ void mouseClicks(int button, int state, int x,int y) {
 
             if(state == GLUT_DOWN) {
                 if(camera_mode) {
+                    //cout << "in camera mode left mouse down " << endl;
                     lastx = x;
                     lasty = y;
                 }
 
                 if(global_mode) {
-
+                    global_rotate_x_diff = x - global_rotate_y;
+                    global_rotate_y_diff = -y + global_rotate_x;
                 }
 
                 if(picking_mode) {
@@ -334,15 +363,36 @@ void mouseClicks(int button, int state, int x,int y) {
                 }
             }
             if(state == GLUT_UP) {
-               pickedItem = -2;
+                if(picking_mode) {
+                    pickedItem = -2;
+                }
             }
-
             break;
 
         case GLUT_RIGHT_BUTTON:
             mouse_left = false;
             mouse_right = true;
             mouse_middle = false;
+
+            if (state == GLUT_DOWN) {
+                if (camera_mode) {
+                    cam_rotate_y_temp = y;
+                }
+
+                if (global_mode) {
+                }
+
+                if (picking_mode) {
+                    pick_x = x;
+                    pick_y = y;
+                    mode = 1;
+                }
+            }
+            if(state == GLUT_UP) {
+                if(picking_mode) {
+                    pickedItem = -2;
+                }
+            }
             break;
 
         case GLUT_MIDDLE_BUTTON:
@@ -350,15 +400,33 @@ void mouseClicks(int button, int state, int x,int y) {
             mouse_right = false;
             mouse_middle = true;
 
-             if(state == GLUT_DOWN) {
-                    mid_lastx = x;
-                    mid_lasty = y;
-             }
+            if (state == GLUT_DOWN) {
+                if (camera_mode) {
+                    cam_rotate_x_temp = x;
+                }
+
+                if (global_mode) {
+                    mid_global_rotate_x_diff = x;
+                    mid_global_rotate_y_diff = y;
+                }
+
+                if (picking_mode) {
+                    pick_x = x;
+                    pick_y = y;
+                    mode = 1;
+                }
+            }
+            if(state == GLUT_UP) {
+                if(picking_mode) {
+                    pickedItem = -2;
+                }
+            }
             break;
     }
 }
 
-void keyboardClicks(unsigned char key, int x, int y) {
+void keyboardClicks(unsigned char key, int x, int y) 
+{
     switch(key) {
         case 'p':
             cout << "picking mode" << endl;
@@ -367,26 +435,44 @@ void keyboardClicks(unsigned char key, int x, int y) {
             global_mode = false;
             break;
 
-        case 8:
+        case '8':
             picking_mode = false;
             if(backspace) {
-                cout << "global mode" << endl;
-                global_mode = true;
-                camera_mode = false;
-                backspace = 0;
-            } else {
                 cout << "camera mode" << endl;
                 camera_mode = true;
                 global_mode = false;
+                backspace = 0;
+            } else {
+                cout << "global mode" << endl;
+                global_mode = true;
+                camera_mode = false;
                 backspace = 1;
             }
+            break;
 
+        case 'c':
+            picking_mode = false;
+            if(backspace) {
+                cout << "camera mode" << endl;
+                camera_mode = true;
+                global_mode = false;
+                backspace = 0;
+            } else {
+                cout << "global mode" << endl;
+                global_mode = true;
+                camera_mode = false;
+                backspace = 1;
+            }
+            break;
+
+        case 'q':
+            exit(1);
             break;
     }
 }
 
-void idleCallBack() {
-
+void idleCallBack() 
+{
     glutPostRedisplay();
 }
 
@@ -416,46 +502,80 @@ void draw_axes(void)
     glEnd();
 }
 
+// Camera and Global transformations for sence and cemera
+// picking mode in draw().
+void transformations() 
+{
+        glRotatef(rotate_x, 0.0, 1.0, 0.0);         // camera left click
+        glRotatef(rotate_y, 1.0, 0.0, 0.0);         // camera left click
+        glTranslatef(cam_rotate_y,0.0,-cam_rotate_x);
+
+        glScalef(scaling, scaling, scaling);        // global right click
+        glRotatef(global_rotate_x, 0.0, 1.0, 0.0);  // global left click
+        glRotatef(global_rotate_y, 1.0, 0.0, 0.0);  // global left click
+        glTranslatef(0.0,0.0,-mid_global_rotate_x);
+        //glTranslatef(0.0,mid_global_rotate_y,0.0);
+}
+
+void updateObjCenterAfterMotion(int t)
+{
+    objCenter[t][0] = picked_scale[array[t]]; // updating new center
+    /*objCenter[t][1] = picked_x_mid[array[t]]; // updating new center */
+    //objCenter[t][2] = picked_x_mid[array[t]]; // updating new center*/
+}
+
 void draw()
 {
+    
     GLfloat materials[numberOfObjectsInScene*9];
     readMaterials(materials);
-    int flag = 0;
-
 
     glEnable(GL_LIGHTING);
-
 
     if (mode == 0) {
         for(int i=0, k=0 ; i < fIndex && k < eIndex ; i += faceElements[k]*2, k++) {
 
             // check which object is beeing colored
             for(int t=0 ; t < objectIndex.size() ; t++) {
+
+                        center_x = objCenter[t][0];
+                        center_y = objCenter[t][1];
+                        center_z = objCenter[t][2];
+                        
                 if(k == objectIndex.at(t)) {
-                   if(array[t] == pickedItem) {
                       if (flag == 1) {
-                        glPopMatrix();
-                        flag =0;
+                         glPopMatrix();
                        }
                         glPushMatrix();
                         glLoadIdentity();
                         flag = 1;
+                   if(array[t] == pickedItem) {
 
-                       glTranslatef(150,150,0);
-                       glRotatef(picked_x[pickedItem], 1.0, 0.0, 0.0);
-                       glRotatef(-picked_y[pickedItem], 0.0, 1.0, 0.0);
-                       glTranslatef(-150,-150,0);
+                   updateObjCenterAfterMotion(t);
 
-
-                       cout << "match:  " << pickedItem << endl;
-                       addMaterials(   materials[t*9]*1.15  , materials[t*9+1]*1.15, materials[t*9+2]*1.15,
-                                       materials[t*9+3]*1.15, materials[t*9+4]*1.15, materials[t*9+5]*1.15,
-                                       materials[t*9+6]*1.15, materials[t*9+7]*1.15, materials[t*9+8]*1.15 );
+                        // Lighter picked Item
+                       addMaterials(   materials[t*9]*2.25  , materials[t*9+2]*2.25, materials[t*9+2]*2.25,
+                                       materials[t*9+3]*2.25, materials[t*9+2]*2.25, materials[t*9+5]*2.25,
+                                       materials[t*9+6]*2.25, materials[t*9+7]*2.25, materials[t*9+8]*2.25 );
                    } else {
                        addMaterials(   materials[t*9]  , materials[t*9+1], materials[t*9+2],
                                        materials[t*9+3], materials[t*9+4], materials[t*9+5],
                                        materials[t*9+6], materials[t*9+7], materials[t*9+8] );
                    }
+                   //Transformations
+                   updateObjCenterAfterMotion(t);
+                   transformations();
+
+                        glTranslatef(center_x,center_y,center_z);
+                            glRotatef(picked_x[array[t]], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[array[t]], 0.0, 1.0, 0.0);
+                            glTranslatef(picked_scale[array[t]],0.0,0.0);
+                            glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
+                            /*glTranslatef(0.0,-picked_x_mid[array[t]],-picked_y_mid[array[t]]);*/
+                        glTranslatef(-center_x,-center_y,-center_z);
+        
+                   updateObjCenterAfterMotion(t);
+                        
                 }
             }
             glBegin(GL_POLYGON);
@@ -463,13 +583,185 @@ void draw()
                 glNormal3f(normals[(faces[i+j+1]-1)*3], normals[(faces[i+j+1]-1)*3+1], normals[(faces[i+j+1]-1)*3+2]);
                 glVertex3f(vertices[(faces[i+j]-1)*3], vertices[(faces[i+j]-1)*3+1], vertices[(faces[i+j]-1)*3+2]);
             }
-
             glEnd();
         }
 
 	} else if(mode == 1) {
 
+        color = 255;
+        flag = 0;
 
+     	for(int i=0, k=0 ; i < fIndex && k < eIndex ; i += faceElements[k]*2, k++) {
+
+            for(int t=0 ; t < objectIndex.size() ; t++) {
+
+                if(k == objectIndex.at(t)) {
+                      if (flag == 1) {
+                          glEnable(GL_LIGHTING);
+                         glPopMatrix();
+                       }
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glDisable(GL_LIGHTING);
+                        flag = 1;
+                    array[t]= color-1;
+                   
+                    //Transformations
+                        updateObjCenterAfterMotion(t);
+                            transformations();
+
+                        //glTranslatef(center_x,center_y,center_z);
+                            glTranslatef(picked_scale[array[t]],0.0,0.0);
+                            glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
+                        //glTranslatef(-center_x,-center_y,-center_z);
+                        updateObjCenterAfterMotion(t);
+
+                    // special color for picking item
+                    glColor3ub(color--,0,0);
+                }
+            }
+            glBegin(GL_POLYGON);
+            for(int j=0 ; j < faceElements[k]*2 ; j+=2) {
+                glVertex3f(vertices[(faces[i+j]-1)*3], vertices[(faces[i+j]-1)*3+1], vertices[(faces[i+j]-1)*3+2]);
+            }
+            glEnd();
+        }
+	}
+}
+
+void mydisplay(void)
+{
+    //  Clear screen and Z-buffer
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();			 //load Identity matrix
+
+    draw();
+
+    if(mode == 1) {
+        GLint viewport[4];
+        GLubyte pixels[3];
+        glGetIntegerv(GL_VIEWPORT,viewport);
+        glReadPixels(pick_x, viewport[3]-pick_y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,(void*)pixels);
+        pickedItem = pixels[0]-1;
+        mode = 0;
+    } else {
+        glutSwapBuffers();
+    }
+}
+
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowSize(900, 900);
+	glutCreateWindow("Assignment 3");
+
+    reader();
+    init();
+
+    // Callback functions
+	glutDisplayFunc(mydisplay);
+    glutMotionFunc(mouseMotion);
+	glutKeyboardFunc(keyboardClicks);
+	glutMouseFunc(mouseClicks);
+	glutIdleFunc(idleCallBack);
+
+    //  Pass control to GLUT for events
+    glutMainLoop();
+    return 0;
+}
+
+void draw_backup()
+{
+    GLfloat materials[numberOfObjectsInScene*9];
+    readMaterials(materials);
+    float center_x = 0;
+    float center_y = 0;
+    float center_z = 0;
+
+    glEnable(GL_LIGHTING);
+
+    if (mode == 0) {
+        for(int i=0, k=0 ; i < fIndex && k < eIndex ; i += faceElements[k]*2, k++) {
+
+            // check which object is beeing colored
+            for(int t=0 ; t < objectIndex.size() ; t++) {
+
+                        center_x = objCenter[t][0];
+                        center_y = objCenter[t][1];
+                        center_z = objCenter[t][2];
+                        
+                if(k == objectIndex.at(t)) {
+                      if (flag == 1) {
+                         glPopMatrix();
+                       }
+                        glPushMatrix();
+                        glLoadIdentity();
+                        flag = 1;
+                   if(array[t] == pickedItem) {
+                      /*if (flag == 1) {
+                          cout << "handling object number: " << pickedItem << " k== " << k << endl;
+                         glPopMatrix();
+                        //flag =0;
+                       }
+                        glPushMatrix();
+                        glLoadIdentity();
+                        flag = 1;*/
+
+
+                        /*center_x = objCenter[t][0];
+                        center_y = objCenter[t][1];
+                        center_z = objCenter[t][2];
+
+                        glTranslatef(center_x,center_y,center_z);
+                            glRotatef(picked_x[pickedItem], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[pickedItem], 0.0, 1.0, 0.0);
+                        glTranslatef(-center_x,-center_y,-center_z);*/
+
+                        /*glTranslatef(center_x,center_y,center_z);
+                            glRotatef(picked_x[array[t]], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[array[t]], 0.0, 1.0, 0.0);
+                        glTranslatef(-center_x,-center_y,-center_z);
+                        glTranslatef(picked_scale[array[t]],0.0,0.0);*/
+                        objCenter[t][0] = picked_scale[array[t]]; // updating new center
+
+
+                       /*cout << "match:  " << pickedItem << endl;*/
+                       addMaterials(   materials[t*9]*2.25  , materials[t*9+2]*2.25, materials[t*9+2]*2.25,
+                                       materials[t*9+3]*2.25, materials[t*9+2]*2.25, materials[t*9+5]*2.25,
+                                       materials[t*9+6]*2.25, materials[t*9+7]*2.25, materials[t*9+8]*2.25 );
+                   } else {
+                       //glPopMatrix();
+                        /*glTranslatef(center_x,center_y,center_z);
+                            glRotatef(picked_x[array[t]], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[array[t]], 0.0, 1.0, 0.0);
+                        glTranslatef(-center_x,-center_y,-center_z);
+                            glScalef(picked_scale[array[t]], picked_scale[array[t]], picked_scale[array[t]]);*/
+
+                       addMaterials(   materials[t*9]  , materials[t*9+1], materials[t*9+2],
+                                       materials[t*9+3], materials[t*9+4], materials[t*9+5],
+                                       materials[t*9+6], materials[t*9+7], materials[t*9+8] );
+                   }
+                        glTranslatef(center_x,center_y,center_z);
+                            glRotatef(picked_x[array[t]], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[array[t]], 0.0, 1.0, 0.0);
+                        glTranslatef(-center_x,-center_y,-center_z);
+                        glTranslatef(picked_scale[array[t]],0.0,0.0);
+                        objCenter[t][0] = picked_scale[array[t]]; // updating new center
+                }
+            }
+            glBegin(GL_POLYGON);
+            for(int j=0 ; j < faceElements[k]*2 ; j+=2) {
+                glNormal3f(normals[(faces[i+j+1]-1)*3], normals[(faces[i+j+1]-1)*3+1], normals[(faces[i+j+1]-1)*3+2]);
+                glVertex3f(vertices[(faces[i+j]-1)*3], vertices[(faces[i+j]-1)*3+1], vertices[(faces[i+j]-1)*3+2]);
+            }
+            glEnd();
+        }
+
+	} else if(mode == 1) {
+
+        glDisable(GL_LIGHTING);
         color = 255;
         flag = 0;
 
@@ -495,8 +787,6 @@ void draw()
             }
             glEnd();
         }
-
-
         glEnable(GL_LIGHTING);
 //         flag = 0;
 //        for(int i=0, k=0 ; i < fIndex && k < eIndex ; i += faceElements[k]*2, k++) {
@@ -536,58 +826,3 @@ void draw()
 	}
 }
 
-void mydisplay(void)
-{
-    //  Clear screen and Z-buffer
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-
-    // left mouse click
-    glRotatef(rotate_x, 1.0, 0.0, 0.0);
-    glRotatef(-rotate_y, 0.0, 1.0, 0.0);
-    // zoom in/out
-    glScalef(scaling, scaling, scaling);
-    //middle mouse click
-    glTranslatef(mid_rotate_x,mid_rotate_y,0.0);
-
-    draw();
-    if(mode == 1) {
-        cout << "in start pick: " << endl;
-        GLint viewport[4];
-        GLubyte pixels[3];
-        glGetIntegerv(GL_VIEWPORT,viewport);
-        cout << "viewport[3]" << viewport[3] << " pick_x: " << pick_x << " pick_y" << pick_y << endl;
-        glReadPixels(pick_x, viewport[3]-pick_y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,(void*)pixels);
-        cout << "in pick: " <<  pixels[0]-1 << endl;
-        pickedItem = pixels[0]-1;
-        mode = 0;
-
-    } else {
-        glutSwapBuffers();
-    }
-
-//    draw_axes();
-}
-
-int main(int argc, char**argv)
-{
-    glutInit(&argc, argv);
-
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(900, 900);
-	glutCreateWindow("Assignment 3");
-
-    reader();
-    init();
-
-    // Callback functions
-	glutDisplayFunc(mydisplay);
-    glutMotionFunc(mouseMotion);
-	glutKeyboardFunc(keyboardClicks);
-	glutMouseFunc(mouseClicks);
-	glutIdleFunc(idleCallBack);
-
-    //  Pass control to GLUT for events
-    glutMainLoop();
-    return 0;
-}
