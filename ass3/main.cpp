@@ -41,10 +41,10 @@ static GLfloat cam_rotate_x_temp = 0;
 static GLfloat cam_rotate_y_temp = 0;
 
 //middle
-static GLfloat mid_global_rotate_x = 0.01;
-static GLfloat mid_global_rotate_y = 0;
-static GLfloat mid_global_rotate_x_diff = 0;
-static GLfloat mid_global_rotate_y_diff = 0;
+static GLfloat mid_global_rotate_x = 0.01f;
+static GLfloat mid_global_rotate_y = 0.01f;
+static GLfloat mid_global_rotate_x_diff = 0.01f;
+static GLfloat mid_global_rotate_y_diff = 0.01f;
 
 bool mouse_left   = false;
 bool mouse_right  = false;
@@ -106,7 +106,7 @@ void init()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();			 //load Identity matrix
 
-    gluPerspective(60,1,0.1,1000);
+    gluPerspective(60,1,0.1,10000);
     gluLookAt(-400,0,0,0,0,0,0,1,0);
 
 	/* return to modelview mode */
@@ -259,7 +259,6 @@ void mouseMotion(int x, int y)
     // Camera
     if(camera_mode) {
         if(mouse_left) {
-            //cout << "in motion -> mouse left " << endl;
             delta_x = (lastx - x);
             delta_y = (lasty - y);
 
@@ -286,8 +285,14 @@ void mouseMotion(int x, int y)
     if(global_mode) {
             
         if (mouse_left) {
-                    global_rotate_y = x - global_rotate_x_diff;
-                    global_rotate_x = y + global_rotate_y_diff;
+            delta_x = (global_rotate_x_diff  - x);
+            delta_y = (global_rotate_y_diff - y);
+
+            global_rotate_x  += (float)(delta_x) / 5.0f;
+            global_rotate_y  -= (float)(delta_y) / 4.0f;
+
+            global_rotate_x_diff = x;
+            global_rotate_y_diff = y;
         }
 
         if (mouse_right) {
@@ -299,8 +304,15 @@ void mouseMotion(int x, int y)
             }
         
         if (mouse_middle) {
-            mid_global_rotate_x = (mid_global_rotate_x_diff-x);
-            mid_global_rotate_y = (mid_global_rotate_y_diff-y);
+            
+            delta_x = (mid_global_rotate_x_diff  - x);
+            delta_y = (mid_global_rotate_y_diff - y);
+
+            mid_global_rotate_x  += (float)(delta_x) / 4.0f;
+            mid_global_rotate_y  -= (float)(delta_y) / 4.0f;
+
+            mid_global_rotate_x_diff = x;
+            mid_global_rotate_y_diff = y;
         }
     }
 
@@ -308,12 +320,15 @@ void mouseMotion(int x, int y)
     if(picking_mode) {
 
         if(mouse_left) {
-          if (pickedItem != -2) {
-             picked_x[pickedItem] -= (pick_x-y)/60.0;
-             picked_y[pickedItem] -= (pick_y-x)/60.0;
-          }
-          pick_x = x;
-          pick_y = y;
+            if (pickedItem != -2) {
+                delta_x = (pick_x  - x);
+                delta_y = (pick_y  - y);
+
+                picked_x[pickedItem] += (float)(delta_x) / 5.0;
+                picked_y[pickedItem] -= (float)(delta_y) / 4.0;
+            }
+            pick_x = x;
+            pick_y = y;
         }
 
         if (mouse_right) {
@@ -352,8 +367,10 @@ void mouseClicks(int button, int state, int x,int y)
                 }
 
                 if(global_mode) {
-                    global_rotate_x_diff = x - global_rotate_y;
-                    global_rotate_y_diff = -y + global_rotate_x;
+                    /*global_rotate_x_diff = x - global_rotate_x;
+                    global_rotate_y_diff = y - global_rotate_y;*/
+                    global_rotate_x_diff = x;
+                    global_rotate_y_diff = y;
                 }
 
                 if(picking_mode) {
@@ -513,7 +530,7 @@ void transformations()
         glScalef(scaling, scaling, scaling);        // global right click
         glRotatef(global_rotate_x, 0.0, 1.0, 0.0);  // global left click
         glRotatef(global_rotate_y, 1.0, 0.0, 0.0);  // global left click
-        glTranslatef(0.0,0.0,-mid_global_rotate_x);
+        glTranslatef(0.0,-mid_global_rotate_y,-mid_global_rotate_x);
         //glTranslatef(0.0,mid_global_rotate_y,0.0);
 }
 
@@ -526,7 +543,6 @@ void updateObjCenterAfterMotion(int t)
 
 void draw()
 {
-    
     GLfloat materials[numberOfObjectsInScene*9];
     readMaterials(materials);
 
@@ -538,10 +554,12 @@ void draw()
             // check which object is beeing colored
             for(int t=0 ; t < objectIndex.size() ; t++) {
 
+                        // setting object center
                         center_x = objCenter[t][0];
                         center_y = objCenter[t][1];
                         center_z = objCenter[t][2];
                         
+                // pop / push matrix for each object
                 if(k == objectIndex.at(t)) {
                       if (flag == 1) {
                          glPopMatrix();
@@ -554,9 +572,9 @@ void draw()
                    updateObjCenterAfterMotion(t);
 
                         // Lighter picked Item
-                       addMaterials(   materials[t*9]*2.25  , materials[t*9+2]*2.25, materials[t*9+2]*2.25,
-                                       materials[t*9+3]*2.25, materials[t*9+2]*2.25, materials[t*9+5]*2.25,
-                                       materials[t*9+6]*2.25, materials[t*9+7]*2.25, materials[t*9+8]*2.25 );
+                       addMaterials(   materials[t*9]*1.15  , materials[t*9+1]*1.15, materials[t*9+1]*1.15,
+                                       materials[t*9+3]*1.15, materials[t*9+1]*1.15, materials[t*9+5]*1.15,
+                                       materials[t*9+6]*1.15, materials[t*9+7]*1.15, materials[t*9+8]*1.15 );
                    } else {
                        addMaterials(   materials[t*9]  , materials[t*9+1], materials[t*9+2],
                                        materials[t*9+3], materials[t*9+4], materials[t*9+5],
@@ -567,11 +585,10 @@ void draw()
                    transformations();
 
                         glTranslatef(center_x,center_y,center_z);
-                            glRotatef(picked_x[array[t]], 1.0, 0.0, 0.0);
-                            glRotatef(picked_y[array[t]], 0.0, 1.0, 0.0);
+                            glRotatef(-picked_x[array[t]], 1.0, 0.0, 0.0);
+                            glRotatef(picked_y[array[t]], 0.0, 0.0, 1.0);
                             glTranslatef(picked_scale[array[t]],0.0,0.0);
                             glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
-                            /*glTranslatef(0.0,-picked_x_mid[array[t]],-picked_y_mid[array[t]]);*/
                         glTranslatef(-center_x,-center_y,-center_z);
         
                    updateObjCenterAfterMotion(t);
@@ -607,14 +624,15 @@ void draw()
                     array[t]= color-1;
                    
                     //Transformations
-                        updateObjCenterAfterMotion(t);
-                            transformations();
+                    updateObjCenterAfterMotion(t);
+                    transformations();
 
-                        //glTranslatef(center_x,center_y,center_z);
-                            glTranslatef(picked_scale[array[t]],0.0,0.0);
-                            glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
-                        //glTranslatef(-center_x,-center_y,-center_z);
-                        updateObjCenterAfterMotion(t);
+                    glTranslatef(center_x,center_y,center_z);
+                        glTranslatef(picked_scale[array[t]],0.0,0.0);
+                        glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
+                    glTranslatef(-center_x,-center_y,-center_z);
+
+                    updateObjCenterAfterMotion(t);
 
                     // special color for picking item
                     glColor3ub(color--,0,0);
