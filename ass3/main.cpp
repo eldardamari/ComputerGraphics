@@ -190,6 +190,7 @@ void reader()
                     center.push_back(z/(double)numOfVertices);
                     objCenter.push_back(center);
 
+
                     x = 0;
                     y = 0;
                     z = 0;
@@ -361,8 +362,7 @@ void mouseClicks(int button, int state, int x,int y)
 
             if(state == GLUT_DOWN) {
                 if(camera_mode) {
-                    //cout << "in camera mode left mouse down " << endl;
-                    lastx = x;
+                    cout << "in camera mode left mouse down " << x << " " << y << endl;
                     lasty = y;
                 }
 
@@ -543,6 +543,7 @@ void updateObjCenterAfterMotion(int t)
 
 void draw()
 {
+
     GLfloat materials[numberOfObjectsInScene*9];
     readMaterials(materials);
 
@@ -584,23 +585,15 @@ void draw()
                    updateObjCenterAfterMotion(t);
                    transformations();
 
-                        /*glTranslatef(center_x,center_y,center_z);
-                            glRotatef(-picked_x[array[t]], 1.0, 0.0, 0.0);
-                            glRotatef(picked_y[array[t]], 0.0, 0.0, 1.0);
-                            glTranslatef(picked_scale[array[t]],0.0,0.0);
-                            //glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
-                            glTranslatef(0.0,picked_x_mid[array[t]],0.0);
-                        glTranslatef(-center_x,-center_y,-center_z);*/
-                        
+                   // Left click rotate and scale zoom in/out
                        glTranslatef(center_x,center_y,center_z);
                                 glRotatef(-picked_x[array[t]], 1.0, 0.0, 0.0);
                                 glRotatef(picked_y[array[t]], 0.0, 0.0, 1.0);
                                 glTranslatef(picked_scale[array[t]],0.0,0.0);
                        glTranslatef(-center_x,-center_y,-center_z);
-                   
                     updateObjCenterAfterMotion(t);
                         
-                    // working
+                    // Middle click
                        glTranslatef(center_x,center_y,center_z);
                                 glTranslatef(0.0,picked_x_mid[array[t]],0.0);
                        glTranslatef(-center_x,-center_y,-center_z);
@@ -641,27 +634,18 @@ void draw()
                     updateObjCenterAfterMotion(t);
                     transformations();
 
-                    /*glTranslatef(center_x,center_y,center_z);
-                        glTranslatef(picked_scale[array[t]],0.0,0.0);
-                        //glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
-                        glTranslatef(0.0,picked_x_mid[array[t]],0.0);
-                    glTranslatef(-center_x,-center_y,-center_z);
-
-                    updateObjCenterAfterMotion(t);*/
                     
+                    // Right click scale
                     glTranslatef(center_x,center_y,center_z);
                         glTranslatef(picked_scale[array[t]],0.0,0.0);
                     glTranslatef(-center_x,-center_y,-center_z);
-
-                    
                     updateObjCenterAfterMotion(t);
                     
-                    // working
+
+                    // Middle click 
                     glTranslatef(center_x,center_y,center_z);
                         glTranslatef(0.0,picked_x_mid[array[t]],0.0);
                     glTranslatef(-center_x,-center_y,-center_z);
-                    
-
                     updateObjCenterAfterMotion(t);
 
                     // special color for picking item
@@ -682,6 +666,9 @@ void mydisplay(void)
     //  Clear screen and Z-buffer
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();			 //load Identity matrix
+
+   //Transformations
+   transformations();
 
     draw();
 
