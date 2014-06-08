@@ -163,8 +163,8 @@ void reader()
         picked_x[r] = 0;
         picked_y[r] = 0;
         picked_scale[r] = 1;
-        picked_x_mid[r] = 0;
-        picked_y_mid[r] = 0;
+        picked_x_mid[r] = 0.0f;
+        picked_y_mid[r] = 0.0f;
     }
 
 
@@ -537,8 +537,8 @@ void transformations()
 void updateObjCenterAfterMotion(int t)
 {
     objCenter[t][0] = picked_scale[array[t]]; // updating new center
+    objCenter[t][1] = picked_x_mid[array[t]]; // updating new center*/
     /*objCenter[t][1] = picked_x_mid[array[t]]; // updating new center */
-    //objCenter[t][2] = picked_x_mid[array[t]]; // updating new center*/
 }
 
 void draw()
@@ -584,12 +584,26 @@ void draw()
                    updateObjCenterAfterMotion(t);
                    transformations();
 
-                        glTranslatef(center_x,center_y,center_z);
+                        /*glTranslatef(center_x,center_y,center_z);
                             glRotatef(-picked_x[array[t]], 1.0, 0.0, 0.0);
                             glRotatef(picked_y[array[t]], 0.0, 0.0, 1.0);
                             glTranslatef(picked_scale[array[t]],0.0,0.0);
-                            glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
-                        glTranslatef(-center_x,-center_y,-center_z);
+                            //glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
+                            glTranslatef(0.0,picked_x_mid[array[t]],0.0);
+                        glTranslatef(-center_x,-center_y,-center_z);*/
+                        
+                       glTranslatef(center_x,center_y,center_z);
+                                glRotatef(-picked_x[array[t]], 1.0, 0.0, 0.0);
+                                glRotatef(picked_y[array[t]], 0.0, 0.0, 1.0);
+                                glTranslatef(picked_scale[array[t]],0.0,0.0);
+                       glTranslatef(-center_x,-center_y,-center_z);
+                   
+                    updateObjCenterAfterMotion(t);
+                        
+                    // working
+                       glTranslatef(center_x,center_y,center_z);
+                                glTranslatef(0.0,picked_x_mid[array[t]],0.0);
+                       glTranslatef(-center_x,-center_y,-center_z);
         
                    updateObjCenterAfterMotion(t);
                         
@@ -627,10 +641,26 @@ void draw()
                     updateObjCenterAfterMotion(t);
                     transformations();
 
+                    /*glTranslatef(center_x,center_y,center_z);
+                        glTranslatef(picked_scale[array[t]],0.0,0.0);
+                        //glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
+                        glTranslatef(0.0,picked_x_mid[array[t]],0.0);
+                    glTranslatef(-center_x,-center_y,-center_z);
+
+                    updateObjCenterAfterMotion(t);*/
+                    
                     glTranslatef(center_x,center_y,center_z);
                         glTranslatef(picked_scale[array[t]],0.0,0.0);
-                        glTranslatef(0.0,0.0,picked_x_mid[array[t]]);
                     glTranslatef(-center_x,-center_y,-center_z);
+
+                    
+                    updateObjCenterAfterMotion(t);
+                    
+                    // working
+                    glTranslatef(center_x,center_y,center_z);
+                        glTranslatef(0.0,picked_x_mid[array[t]],0.0);
+                    glTranslatef(-center_x,-center_y,-center_z);
+                    
 
                     updateObjCenterAfterMotion(t);
 
